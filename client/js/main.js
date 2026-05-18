@@ -12,6 +12,7 @@ import { playShootSound, playHitSound, playPickupSound, playExtractionBeep } fro
 import { randomLootType, getLootDef, loadLootData } from './lootdata.js';
 import { loadOperatorData, defaultOperator, getOperatorDef, allOperators } from './operatordata.js';
 import { loadBotData } from './botdata.js';
+import { addCoins, getCoins } from './economy.js';
 
 // ---- Canvas setup ----
 const canvas = /** @type {HTMLCanvasElement} */ (document.getElementById('gameCanvas'));
@@ -38,6 +39,7 @@ async function initWorld() {
   isGameOver = false;
   const opDef = getOperatorDef(selectedOpId || defaultOperator().id);
   player = new Player(opDef);
+  player.coins = getCoins();
 
   // Load JSON map (Phase 3)
   const mapData = await loadMap('maps/factory_01.json');
@@ -215,7 +217,11 @@ function update(dt) {
     }
     if (player.extractTimer <= 0) {
       isGameOver = true;
-      showVictory(player);
+      // Calculate loot value and add to coins
+      const totalValue = player.inventory.reduce((sum, item) => sum + (item.value || 0), 0);
+      const bonus = 5000; // extraction bonus
+      addCoins(totalValue + bonus);
+      showVictory(player, totalValue, bonus);
       return;
     }
   } else if (player.isExtracting) {

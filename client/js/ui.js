@@ -1,4 +1,6 @@
 // ui.js - Start screen, game over modal, victory screen
+import { getCoins } from './economy.js';
+
 const resultModal = document.getElementById('result-modal');
 const resultTitle = document.getElementById('result-title');
 const resultDesc = document.getElementById('result-desc');
@@ -31,11 +33,11 @@ export function showGameOver() {
   restartBtn.innerText = '重新部署';
 }
 
-export function showVictory(player) {
+export function showVictory(player, totalValue = 0, bonus = 0) {
   resultModal.classList.remove('hidden');
   resultTitle.innerText = '撤离成功';
   resultTitle.style.color = '#10b981';
-  resultDesc.innerText = '你已安全撤离。以下是带出的珍贵战利品：';
+  resultDesc.innerText = `你已安全撤离。战利品价值: $${totalValue.toLocaleString()} + 撤离奖励: $${bonus.toLocaleString()}`;
   summaryLootContainer.innerHTML = '';
   if (player.inventory.length === 0) {
     summaryLootContainer.innerHTML = '<span style="color:#94a3b8;">空空如也</span>';
@@ -44,10 +46,14 @@ export function showVictory(player) {
       const sp = document.createElement('span');
       sp.style.fontSize = '2rem';
       sp.innerText = item.emoji;
-      sp.title = item.name;
+      sp.title = `${item.name} ($${item.value?.toLocaleString() || 0})`;
       summaryLootContainer.appendChild(sp);
     }
   }
+  const coinInfo = document.createElement('div');
+  coinInfo.style.cssText = 'width:100%;margin-top:8px;font-family:var(--font-mono);color:var(--accent-amber);font-size:0.9rem;';
+  coinInfo.innerText = `💰 获得 $${(totalValue + bonus).toLocaleString()} (当前余额: $${getCoins().toLocaleString()})`;
+  summaryLootContainer.appendChild(coinInfo);
   restartBtn.innerText = '开始新对局';
 }
 

@@ -57,6 +57,9 @@ export function updateHUD(player, nearestLoot) {
   }
 
   elements.lootCount.innerText = `${player.inventory.length} / ${player.maxSlots}`;
+
+  const coinEl = document.getElementById('coins-display');
+  if (coinEl) coinEl.innerText = `💰 ${player.coins?.toLocaleString() || 0}`;
 }
 
 export function refreshInventoryGrid(player) {
