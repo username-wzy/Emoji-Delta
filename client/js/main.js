@@ -6,7 +6,7 @@ import { aabb, getPlayerBox, raycastHitscan, movePlayer } from './physics.js';
 import { updateBots } from './ai.js';
 import { render } from './renderer.js';
 import { initHUD, updateHUD, refreshInventoryGrid, pushNotification, getElements } from './hud.js';
-import { showStartScreen, hideStartScreen, onDeploy, showGameOver, showVictory, onRestart } from './ui.js';
+import { showStartScreen, hideStartScreen, onDeploy, showGameOver, showVictory, onRestart, showLoginScreen, onLogin } from './ui.js';
 import { loadMap, buildWorldFromMap } from './maploader.js';
 import { playShootSound, playHitSound, playPickupSound, playExtractionBeep } from './sound.js';
 import { randomLootType, getLootDef, loadLootData } from './lootdata.js';
@@ -295,10 +295,13 @@ function initOperatorPicker() {
   if (ops.length > 0) selectedOpId = ops[0].id;
 }
 
-// Start screen flow — preload loot + operator data, then show start screen
+// Login → Start screen flow
 Promise.all([loadLootData(), loadOperatorData(), loadBotData()]).then(() => {
   initOperatorPicker();
-  showStartScreen();
+  showLoginScreen();
+  onLogin((name) => {
+    showStartScreen();
+  });
 });
 
 onDeploy(async () => {

@@ -1,5 +1,5 @@
-// ui.js - Start screen, game over modal, victory screen
-import { getCoins } from './economy.js';
+// ui.js - Start screen, game over modal, victory screen, login
+import { getCoins, setUsername, getUsername, loadProfile } from './economy.js';
 
 const resultModal = document.getElementById('result-modal');
 const resultTitle = document.getElementById('result-title');
@@ -9,7 +9,38 @@ const restartBtn = document.getElementById('restart-btn');
 const startScreen = document.getElementById('start-screen');
 const deployBtn = document.getElementById('deploy-btn');
 const hudOverlay = document.getElementById('hud');
+const loginScreen = document.getElementById('login-screen');
+const usernameInput = document.getElementById('username-input');
+const loginBtn = document.getElementById('login-btn');
 
+// ---- Login ----
+export function showLoginScreen() {
+  startScreen.classList.add('hidden');
+  hudOverlay.classList.add('hidden');
+  loginScreen.classList.remove('hidden');
+  // Pre-fill if username exists
+  loadProfile();
+  const existing = getUsername();
+  if (existing) usernameInput.value = existing;
+}
+
+export function hideLoginScreen() {
+  loginScreen.classList.add('hidden');
+}
+
+export function onLogin(callback) {
+  loginBtn.addEventListener('click', () => {
+    const name = usernameInput.value.trim() || '特工';
+    setUsername(name);
+    hideLoginScreen();
+    callback(name);
+  });
+  usernameInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') loginBtn.click();
+  });
+}
+
+// ---- Start screen ----
 export function showStartScreen() {
   startScreen.classList.remove('hidden');
   hudOverlay.classList.add('hidden');
