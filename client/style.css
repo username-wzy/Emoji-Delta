@@ -205,6 +205,64 @@ body, html {
   margin-top: 8px;
 }
 
+/* Stash Panel in Lobby */
+.stash-panel {
+  width: 100%; max-width: 400px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 12px;
+  padding: 12px 16px;
+  margin: 4px 0;
+}
+
+.stash-header {
+  display: flex; justify-content: space-between;
+  font-size: 0.85rem; font-weight: 700;
+  color: var(--text-sub);
+  margin-bottom: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+.stash-coins {
+  font-family: var(--font-mono);
+  color: var(--accent-amber);
+  font-size: 0.8rem;
+}
+
+.stash-grid {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 6px;
+  max-height: 80px;
+  overflow-y: auto;
+}
+
+.stash-grid::-webkit-scrollbar { width: 4px; }
+.stash-grid::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+
+.stash-item {
+  aspect-ratio: 1;
+  background: rgba(0,0,0,0.4);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.stash-item:hover {
+  border-color: var(--accent-cyan);
+  transform: scale(1.1);
+}
+
+.stash-empty {
+  grid-column: 1 / -1;
+  font-size: 0.7rem; color: rgba(255,255,255,0.2);
+  text-align: center; padding: 8px;
+}
+
 /* ========== HUD OVERLAY ========== */
 #hud {
   position: absolute; top: 0; left: 0;

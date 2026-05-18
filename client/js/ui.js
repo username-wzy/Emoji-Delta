@@ -1,5 +1,5 @@
 // ui.js - Start screen, game over modal, victory screen, login
-import { getCoins, setUsername, getUsername, loadProfile } from './economy.js';
+import { getCoins, setUsername, getUsername, loadProfile, getStash } from './economy.js';
 
 const resultModal = document.getElementById('result-modal');
 const resultTitle = document.getElementById('result-title');
@@ -44,6 +44,40 @@ export function onLogin(callback) {
 export function showStartScreen() {
   startScreen.classList.remove('hidden');
   hudOverlay.classList.add('hidden');
+  refreshStashUI();
+}
+
+function refreshStashUI() {
+  const grid = document.getElementById('stash-grid');
+  const coinsEl = document.getElementById('stash-coins');
+  if (!grid) return;
+
+  const stash = getStash();
+  const coins = getCoins();
+
+  if (coinsEl) coinsEl.innerText = `💰 ${coins.toLocaleString()}`;
+  grid.innerHTML = '';
+
+  if (stash.length === 0) {
+    grid.innerHTML = '<span class="stash-empty">仓库空空如也 — 完成撤离获取战利品</span>';
+    return;
+  }
+
+  // Show up to 16 items
+  const display = stash.slice(0, 16);
+  for (const item of display) {
+    const el = document.createElement('div');
+    el.className = 'stash-item';
+    el.innerText = item.emoji || '📦';
+    el.title = `${item.name || '物品'} ($${(item.value || 0).toLocaleString()})`;
+    grid.appendChild(el);
+  }
+  if (stash.length > 16) {
+    const more = document.createElement('span');
+    more.className = 'stash-empty';
+    more.innerText = `...及其他 ${stash.length - 16} 件`;
+    grid.appendChild(more);
+  }
 }
 
 export function hideStartScreen() {

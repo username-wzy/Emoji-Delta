@@ -12,7 +12,7 @@ import { playShootSound, playHitSound, playPickupSound, playExtractionBeep } fro
 import { randomLootType, getLootDef, loadLootData } from './lootdata.js';
 import { loadOperatorData, defaultOperator, getOperatorDef, allOperators } from './operatordata.js';
 import { loadBotData } from './botdata.js';
-import { addCoins, getCoins } from './economy.js';
+import { addCoins, getCoins, addToStash } from './economy.js';
 
 // ---- Canvas setup ----
 const canvas = /** @type {HTMLCanvasElement} */ (document.getElementById('gameCanvas'));
@@ -217,9 +217,12 @@ function update(dt) {
     }
     if (player.extractTimer <= 0) {
       isGameOver = true;
-      // Calculate loot value and add to coins
+      // Move loot to stash
+      for (const item of player.inventory) {
+        addToStash({ id: item.type, emoji: item.emoji, name: item.name, value: item.value || 0 });
+      }
       const totalValue = player.inventory.reduce((sum, item) => sum + (item.value || 0), 0);
-      const bonus = 5000; // extraction bonus
+      const bonus = 5000;
       addCoins(totalValue + bonus);
       showVictory(player, totalValue, bonus);
       return;
