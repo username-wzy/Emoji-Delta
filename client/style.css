@@ -577,11 +577,12 @@ body, html {
   animation: flash 0.5s infinite alternate;
 }
 
-.coins-display {
-  position: absolute; bottom: -32px; right: 0;
-  font-family: var(--font-mono); font-size: 0.8rem;
+.top-coins {
+  font-family: var(--font-mono); font-size: 0.85rem;
   color: var(--accent-amber); font-weight: 700;
   letter-spacing: 0.05em;
+  display: flex; align-items: center;
+  border-left: 4px solid var(--accent-amber);
 }
 
 .weapon-slots {

@@ -204,7 +204,7 @@ export function showGameOver() {
   resultTitle.style.color = '#f43f5e';
   resultDesc.innerText = '你在 DELTA-01 区域被消灭。所有未带出的战利品已遗失。';
   summaryLootContainer.innerHTML = '';
-  restartBtn.innerText = '重新部署';
+  restartBtn.innerText = '返回大厅';
 }
 
 export function showVictory(player, totalValue = 0, bonus = 0) {
@@ -228,7 +228,7 @@ export function showVictory(player, totalValue = 0, bonus = 0) {
   coinInfo.style.cssText = 'width:100%;margin-top:8px;font-family:var(--font-mono);color:var(--accent-amber);font-size:0.9rem;';
   coinInfo.innerText = `💰 获得 $${(totalValue + bonus).toLocaleString()} (当前余额: $${getCoins().toLocaleString()})`;
   summaryLootContainer.appendChild(coinInfo);
-  restartBtn.innerText = '开始新对局';
+  restartBtn.innerText = '返回大厅';
 }
 
 export function onRestart(callback) {
