@@ -12,16 +12,20 @@ Emoji Delta/
 │   ├── maps/
 │   │   └── factory_01.json # JSON 固定地图（数据驱动）
 │   ├── data/
-│   │   └── loot.json       # JSON 战利品定义（20 种，与代码解耦）
+│   │   ├── loot.json       # 战利品定义（20 种，与代码解耦）
+│   │   ├── operators.json  # 特工角色定义（3 种，属性/武器）
+│   │   └── bots.json       # Bot 类型定义（7 种，属性/AI参数）
 │   └── js/
 │       ├── main.js         # 入口、游戏主循环、世界初始化
 │       ├── constants.js    # 世界常量、配置
 │       ├── entities.js     # Player, Bot, Loot, Wall 等实体类
 │       ├── input.js        # 键盘/鼠标输入管理
 │       ├── physics.js      # AABB 碰撞、射线检测、玩家移动
-│       ├── ai.js           # Bot AI 状态机（视觉锥、反应延迟）
+│       ├── ai.js           # Bot AI 状态机（数据驱动参数）
 │       ├── maploader.js    # JSON 地图加载与解析
-│       ├── lootdata.js     # 战利品数据加载器（加权随机、按ID查找）
+│       ├── lootdata.js     # 战利品数据加载器
+│       ├── operatordata.js # 特工数据加载器
+│       ├── botdata.js      # Bot 数据加载器（加权随机生成）
 │       ├── sound.js        # Web Audio API 程序化音效（try-catch）
 │       ├── renderer.js     # Canvas 渲染（棋盘格背景、实体、准星）
 │       ├── hud.js          # HUD 更新、背包、通知
@@ -55,10 +59,12 @@ Emoji Delta/
 - 权威射击判定 | 序列号客户端预测
 - 状态快照广播 + 声音事件同步
 
-### Phase 3：JSON 固定地图 + 数据驱动战利品 + 增强 AI + 音效
+### Phase 3：JSON 固定地图 + 全数据驱动 + 增强 AI + 音效
 - **JSON 地图系统**：`factory_01.json` 数据驱动，图块网格 + 出生点 + 战利品点（含权重）+ Bot 巡逻节点 + 撤离点
-- **数据驱动战利品**：`loot.json` 定义 20 种战利品（id / emoji / name / value / weight / onPickup），新增即改 JSON，零代码修改
-- **增强 Bot AI**：60° 视觉锥（不再 360° 感知）→ 0.3s 反应延迟 → 5s 脱离视线后丢失仇恨 → 0.5s AI Tick 降频
+- **全数据驱动**：特工 (`operators.json` 3种) / Bot (`bots.json` 7种) / 战利品 (`loot.json` 20种) 全部 JSON 定义，新增仅需修改数据文件
+- **特工系统**：🕵️ 侦察兵 (轻甲高速) | 🥷 战术特工 (均衡) | 💂 重装兵 (重甲坦克)，开始画面可选
+- **Bot 类型**：🧟 丧尸/狂奔者 | 👮 拾荒者枪手/狙击手/重装枪手 | 👹 食人魔头目/指挥官头目
+- **增强 Bot AI**：所有 AI 参数来自 JSON（visionRange/attackRange/damage/penetration/reactionDelay），60° 视觉锥 → 反应延迟 → 5s 仇恨超时 → 0.5s Tick 降频
 - **战利品类型**：💵 现金 | 💎 宝石 | 🔫 武器×3 | 🛡️ 护甲×2 | 💊 医疗包×2 | 🧨 手榴弹 | 📦 弹药×3 | 🔑 钥匙卡×2 | 📿 金项链 | 💾 加密U盘 | 🏷️ 身份牌
 - **拾取效果**：医疗包 `heal_50` / 外科手术包 `heal_100`（`onPickup` 字段驱动）
 - **程序化音效**（Web Audio API，带 try-catch 静默降级）：枪声、命中声、拾取声、撤离倒计时蜂鸣

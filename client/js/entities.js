@@ -2,36 +2,44 @@
 import { WORLD_WIDTH, WORLD_HEIGHT } from './constants.js';
 
 export class Player {
-  constructor() {
+  /**
+   * @param {Object} [op] Operator config from operatordata.js
+   */
+  constructor(op) {
+    op = op || {};
+
     this.x = WORLD_WIDTH / 2;
     this.y = WORLD_HEIGHT / 2;
-    this.size = 48;
-    this.emoji = '🥷';
+    this.size = op.size || 48;
+    this.emoji = op.emoji || '🥷';
+    this.opName = op.name || '特工';
+    this.opId = op.id || 'tactical';
 
-    this.maxHp = 100;
-    this.hp = 100;
-    this.maxArmor = 80;
-    this.armor = 80;
-    this.armorClass = 4;
+    this.maxHp = op.maxHp || 100;
+    this.hp = this.maxHp;
+    this.maxArmor = op.maxArmor || 80;
+    this.armor = this.maxArmor;
+    this.armorClass = op.armorClass || 4;
 
-    this.maxStamina = 100;
-    this.stamina = 100;
+    this.maxStamina = op.maxStamina || 100;
+    this.stamina = this.maxStamina;
 
-    this.baseSpeed = 300;
-    this.sprintMultiplier = 1.6;
+    this.baseSpeed = op.baseSpeed || 300;
+    this.sprintMultiplier = op.sprintMultiplier || 1.6;
     this.isSprinting = false;
 
+    const g = (op.gun) || {};
     this.gun = {
-      name: 'TAC-SMG',
-      damage: 28,
-      penetration: 35,
-      fireRate: 0.08,
+      name: g.name || 'TAC-SMG',
+      damage: g.damage || 28,
+      penetration: g.penetration || 35,
+      fireRate: g.fireRate || 0.08,
       cooldown: 0,
-      magSize: 30,
-      currentAmmo: 30,
-      maxAmmo: 120,
+      magSize: g.magSize || 30,
+      currentAmmo: g.magSize || 30,
+      maxAmmo: g.maxAmmo || 120,
       isReloading: false,
-      reloadTime: 1.8,
+      reloadTime: g.reloadTime || 1.8,
       reloadTimer: 0
     };
 
@@ -40,7 +48,7 @@ export class Player {
     this.extractTimer = 0;
     this.extractDuration = 10.0;
     this.inventory = [];
-    this.maxSlots = 12;
+    this.maxSlots = op.maxSlots || 12;
   }
 }
 
@@ -56,16 +64,30 @@ export class Wall {
 }
 
 export class Bot {
-  constructor(x, y, type) {
+  /**
+   * @param {number} x
+   * @param {number} y
+   * @param {Object} [cfg] Bot config from botdata.js
+   */
+  constructor(x, y, cfg) {
+    cfg = cfg || {};
     this.id = Math.random().toString();
     this.x = x;
     this.y = y;
-    this.size = 48;
-    this.type = type;
-    this.emoji = type === 'melee' ? '🧟' : (type === 'boss' ? '👹' : '👮');
-    this.hp = type === 'boss' ? 300 : 80;
+    this.botId = cfg.id || 'zombie';
+    this.botName = cfg.name || '敌人';
+    this.category = cfg.category || 'melee';
+    this.size = cfg.size || 48;
+    this.emoji = cfg.emoji || '🧟';
+    this.hp = cfg.hp || 80;
     this.maxHp = this.hp;
-    this.speed = type === 'melee' ? 180 : 140;
+    this.speed = cfg.speed || 140;
+    this.damage = cfg.damage || 20;
+    this.penetration = cfg.penetration || 15;
+    this.attackRange = cfg.attackRange || 60;
+    this.fireRate = cfg.fireRate || 1.0;
+    this.visionRange = cfg.visionRange || 350;
+    this.reactionDelayCfg = cfg.reactionDelay || 0.3;
     this.state = 'patrol';
     this.targetX = x + (Math.random() - 0.5) * 300;
     this.targetY = y + (Math.random() - 0.5) * 300;
@@ -73,10 +95,13 @@ export class Bot {
     this.fireCooldown = 0;
     // Phase 3: enhanced AI fields
     this.facingAngle = Math.random() * Math.PI * 2;
-    this.reactionDelay = 0;       // 0.3s reaction before firing
-    this.aggroLossTimer = 0;      // lose aggro after 5s out of sight
-    this.aiTickTimer = 0;         // throttle AI decisions to 0.5s
+    this.reactionDelay = 0;
+    this.aggroLossTimer = 0;
+    this.aiTickTimer = 0;
     this.nextPathTarget = null;
+    this.patrolOrigin = null;
+    this.patrolRadius = 200;
+    this.investigateTimer = 0;
   }
 }
 

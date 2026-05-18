@@ -1,0 +1,71 @@
+[
+  {
+    "id": "scout",
+    "name": "侦察兵",
+    "emoji": "🕵️",
+    "description": "轻装快速型 · 高机动低防护",
+    "size": 44,
+    "maxHp": 80,
+    "maxArmor": 40,
+    "armorClass": 2,
+    "maxStamina": 120,
+    "baseSpeed": 360,
+    "sprintMultiplier": 1.7,
+    "maxSlots": 8,
+    "gun": {
+      "name": "MP5-SD (9mm)",
+      "damage": 22,
+      "penetration": 25,
+      "fireRate": 0.06,
+      "magSize": 30,
+      "maxAmmo": 150,
+      "reloadTime": 1.5
+    }
+  },
+  {
+    "id": "tactical",
+    "name": "战术特工",
+    "emoji": "🥷",
+    "description": "均衡型 · 全能适应各种战况",
+    "size": 48,
+    "maxHp": 100,
+    "maxArmor": 80,
+    "armorClass": 4,
+    "maxStamina": 100,
+    "baseSpeed": 300,
+    "sprintMultiplier": 1.6,
+    "maxSlots": 12,
+    "gun": {
+      "name": "TAC-SMG (9x19mm)",
+      "damage": 28,
+      "penetration": 35,
+      "fireRate": 0.08,
+      "magSize": 30,
+      "maxAmmo": 120,
+      "reloadTime": 1.8
+    }
+  },
+  {
+    "id": "heavy",
+    "name": "重装兵",
+    "emoji": "💂",
+    "description": "重甲坦克型 · 高防护低机动",
+    "size": 52,
+    "maxHp": 150,
+    "maxArmor": 150,
+    "armorClass": 6,
+    "maxStamina": 70,
+    "baseSpeed": 240,
+    "sprintMultiplier": 1.4,
+    "maxSlots": 16,
+    "gun": {
+      "name": "M249 SAW (5.56mm)",
+      "damage": 35,
+      "penetration": 45,
+      "fireRate": 0.10,
+      "magSize": 100,
+      "maxAmmo": 200,
+      "reloadTime": 2.5
+    }
+  }
+]

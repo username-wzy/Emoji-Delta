@@ -2,6 +2,7 @@
 import { WORLD_WIDTH, WORLD_HEIGHT, TILE_SIZE } from './constants.js';
 import { Wall, Bot, Loot, applyLootData } from './entities.js';
 import { randomLootType, getLootDef } from './lootdata.js';
+import { randomBotType, randomBossType, getBotDef } from './botdata.js';
 
 export async function loadMap(path) {
   try {
@@ -55,8 +56,9 @@ export function buildWorldFromMap(mapData) {
         console.warn(`Skipping scav spawn at (${sp.x},${sp.y}) — tile is wall`);
         continue;
       }
-      const type = Math.random() < 0.3 ? 'boss' : (Math.random() < 0.5 ? 'melee' : 'ranged');
-      const bot = new Bot(sp.x * ts + ts / 2, sp.y * ts + ts / 2, type);
+      const botType = Math.random() < 0.15 ? randomBossType() : randomBotType();
+      const botDef = getBotDef(botType);
+      const bot = new Bot(sp.x * ts + ts / 2, sp.y * ts + ts / 2, botDef);
       bot.patrolOrigin = { x: bot.x, y: bot.y };
       bot.patrolRadius = 200;
       bots.push(bot);
@@ -76,8 +78,8 @@ export function buildWorldFromMap(mapData) {
         attempts++;
       } while (isWallAt(col, row) && attempts < 50);
       if (attempts < 50) {
-        const type = i === 0 ? 'boss' : (Math.random() < 0.5 ? 'melee' : 'ranged');
-        bots.push(new Bot(bx, by, type));
+        const botType = i === 0 ? randomBossType() : randomBotType();
+        bots.push(new Bot(bx, by, getBotDef(botType)));
       }
     }
   }

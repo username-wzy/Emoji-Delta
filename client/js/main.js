@@ -10,14 +10,16 @@ import { showStartScreen, hideStartScreen, onDeploy, showGameOver, showVictory, 
 import { loadMap, buildWorldFromMap } from './maploader.js';
 import { playShootSound, playHitSound, playPickupSound, playExtractionBeep } from './sound.js';
 import { randomLootType, getLootDef, loadLootData } from './lootdata.js';
-
+import { loadOperatorData, defaultOperator, getOperatorDef, allOperators } from './operatordata.js';
+import { loadBotData } from './botdata.js';
 
 // ---- Canvas setup ----
 const canvas = /** @type {HTMLCanvasElement} */ (document.getElementById('gameCanvas'));
 const ctx = /** @type {CanvasRenderingContext2D} */ (canvas.getContext('2d'));
 
 // ---- State ----
-let player = new Player();
+let selectedOpId = null;
+let player = new Player(defaultOperator());
 let walls = [];
 let bots = [];
 let loots = [];
@@ -34,7 +36,8 @@ let extractionBeepTimer = 0;
 async function initWorld() {
   walls = []; bots = []; loots = []; particles = []; soundBlips = [];
   isGameOver = false;
-  player = new Player();
+  const opDef = getOperatorDef(selectedOpId || defaultOperator().id);
+  player = new Player(opDef);
 
   // Load JSON map (Phase 3)
   const mapData = await loadMap('maps/factory_01.json');
@@ -264,8 +267,31 @@ function loop(now) {
 initHUD();
 initInput(canvas, camera, interactTarget, reloadWeapon, toggleInventory);
 
-// Start screen flow — preload loot data, then show start screen
-loadLootData().then(() => {
+// ---- Operator picker on start screen ----
+function initOperatorPicker() {
+  const ops = allOperators();
+  const container = document.getElementById('operator-cards');
+  if (!container) return;
+  container.innerHTML = '';
+
+  ops.forEach((op, i) => {
+    const card = document.createElement('div');
+    card.className = 'op-card' + (i === 0 ? ' selected' : '');
+    card.innerHTML = `<span class="op-emoji">${op.emoji}</span><span class="op-name">${op.name}</span><span class="op-desc">${op.description}</span>`;
+    card.addEventListener('click', () => {
+      container.querySelectorAll('.op-card').forEach(c => c.classList.remove('selected'));
+      card.classList.add('selected');
+      selectedOpId = op.id;
+    });
+    container.appendChild(card);
+  });
+
+  if (ops.length > 0) selectedOpId = ops[0].id;
+}
+
+// Start screen flow — preload loot + operator data, then show start screen
+Promise.all([loadLootData(), loadOperatorData(), loadBotData()]).then(() => {
+  initOperatorPicker();
   showStartScreen();
 });
 

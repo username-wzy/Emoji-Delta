@@ -1,9 +1,7 @@
 // ai.js - Enhanced Bot AI FSM (Phase 3: vision cone, reaction delay, tick-throttle)
 import { hasLineOfSight } from './physics.js';
 
-const VISION_RANGE = 450;
 const VISION_CONE = Math.PI / 3;  // 60° (30° each side)
-const REACTION_DELAY = 0.3;        // seconds before firing
 const AGGRO_LOSS_TIME = 5.0;       // seconds out of sight → lose aggro
 const AI_TICK_INTERVAL = 0.5;      // throttle AI decisions to save CPU
 const INVESTIGATE_TIME = 3.0;      // stay at investigation point
@@ -12,7 +10,7 @@ function inVisionCone(bot, targetX, targetY) {
   const dx = targetX - bot.x;
   const dy = targetY - bot.y;
   const dist = Math.hypot(dx, dy);
-  if (dist > VISION_RANGE) return false;
+  if (dist > bot.visionRange) return false;
   const angleToTarget = Math.atan2(dy, dx);
   let diff = angleToTarget - bot.facingAngle;
   while (diff > Math.PI) diff -= Math.PI * 2;
@@ -40,7 +38,7 @@ export function updateBots(dt, bots, player, soundBlips, walls) {
         bot.targetX = player.x;
         bot.targetY = player.y;
         bot.aggroLossTimer = AGGRO_LOSS_TIME;
-        if (bot.reactionDelay <= 0) bot.reactionDelay = REACTION_DELAY;
+        if (bot.reactionDelay <= 0) bot.reactionDelay = bot.reactionDelayCfg;
       } else if (bot.state === 'aggro') {
         bot.aggroLossTimer -= AI_TICK_INTERVAL;
         if (bot.aggroLossTimer <= 0) {
@@ -115,22 +113,20 @@ export function updateBots(dt, bots, player, soundBlips, walls) {
     // Combat: fire only after reaction delay
     if (bot.fireCooldown > 0) bot.fireCooldown -= dt;
     if (bot.state === 'aggro' && bot.reactionDelay <= 0 &&
-        distToPlayer < (bot.type === 'melee' ? 60 : 350) && bot.fireCooldown <= 0) {
+        distToPlayer < bot.attackRange && bot.fireCooldown <= 0) {
       if (hasLineOfSight({ x: bot.x, y: bot.y }, { x: player.x, y: player.y }, walls)) {
-        bot.fireCooldown = bot.type === 'melee' ? 1.0 : 0.6;
-        const baseDmg = bot.type === 'melee' ? 30 : 20;
-        const pen = bot.type === 'melee' ? 15 : 25;
+        bot.fireCooldown = bot.fireRate;
 
         if (player.armor > 0) {
-          if (pen >= player.armorClass * 10) {
-            player.hp -= baseDmg * 0.8;
-            player.armor -= baseDmg * 0.3;
+          if (bot.penetration >= player.armorClass * 10) {
+            player.hp -= bot.damage * 0.8;
+            player.armor -= bot.damage * 0.3;
           } else {
-            player.armor -= baseDmg * 0.6;
-            player.hp -= baseDmg * 0.15;
+            player.armor -= bot.damage * 0.6;
+            player.hp -= bot.damage * 0.15;
           }
         } else {
-          player.hp -= baseDmg;
+          player.hp -= bot.damage;
         }
         player.armor = Math.max(0, player.armor);
         player.hp = Math.max(0, player.hp);

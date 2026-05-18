@@ -27,6 +27,11 @@ export function initHUD() {
 }
 
 export function updateHUD(player, nearestLoot) {
+  const pn = document.getElementById('player-name');
+  const ac = document.getElementById('armor-class-text');
+  if (pn) pn.innerText = player.opName || '特工';
+  if (ac) ac.innerText = `${player.armorClass}级护甲`;
+
   elements.hpText.innerText = `${Math.round(player.hp)}/${player.maxHp}`;
   elements.hpFill.style.width = `${(player.hp / player.maxHp) * 100}%`;
   elements.armorText.innerText = `${Math.round(player.armor)}/${player.maxArmor}`;

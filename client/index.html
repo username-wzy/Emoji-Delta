@@ -27,8 +27,11 @@
         <div class="info-row"><span>🕹️</span><span>WASD 移动 | Shift 冲刺 | 鼠标瞄准射击</span></div>
         <div class="info-row"><span>🎒</span><span>F 拾取 | R 换弹 | Tab 背包</span></div>
       </div>
+      <div id="operator-cards" class="op-selector">
+        <!-- Populated by initOperatorPicker() -->
+      </div>
       <button id="deploy-btn" class="deploy-btn">部 署 行 动</button>
-      <p class="start-version">Phase 1 · 纯前端单机版</p>
+      <p class="start-version">Phase 3 · JSON数据驱动</p>
     </div>
   </div>
 
@@ -67,8 +70,8 @@
       <div class="stat-header">
         <span class="avatar-icon">🕵️</span>
         <div class="player-details">
-          <div class="player-name">特工 07</div>
-          <div class="armor-class">四级护甲</div>
+          <div id="player-name" class="player-name">特工</div>
+          <div id="armor-class-text" class="armor-class">护甲</div>
         </div>
       </div>
       <div class="stat-bars">
