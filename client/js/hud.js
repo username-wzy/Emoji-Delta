@@ -1,0 +1,78 @@
+// hud.js - HUD DOM element management
+
+let elements = {};
+
+export function initHUD() {
+  elements = {
+    hpText: document.getElementById('hp-text'),
+    hpFill: document.getElementById('hp-fill'),
+    armorText: document.getElementById('armor-text'),
+    armorFill: document.getElementById('armor-fill'),
+    staminaText: document.getElementById('stamina-text'),
+    staminaFill: document.getElementById('stamina-fill'),
+    ammoCurrent: document.getElementById('ammo-current'),
+    ammoMax: document.getElementById('ammo-max'),
+    reloadingMsg: document.getElementById('reloading-msg'),
+    interactionPrompt: document.getElementById('interaction-prompt'),
+    interactionText: document.getElementById('interaction-text'),
+    extractionBanner: document.getElementById('extraction-banner'),
+    extractProgressBar: document.getElementById('extract-progress-bar'),
+    extractTimeText: document.getElementById('extract-time-text'),
+    inventoryDrawer: document.getElementById('inventory-drawer'),
+    lootGrid: document.getElementById('loot-grid'),
+    lootCount: document.getElementById('loot-count'),
+    notificationFeed: document.getElementById('notification-feed'),
+  };
+  return elements;
+}
+
+export function updateHUD(player, nearestLoot) {
+  elements.hpText.innerText = `${Math.round(player.hp)}/${player.maxHp}`;
+  elements.hpFill.style.width = `${(player.hp / player.maxHp) * 100}%`;
+  elements.armorText.innerText = `${Math.round(player.armor)}/${player.maxArmor}`;
+  elements.armorFill.style.width = `${(player.armor / player.maxArmor) * 100}%`;
+  elements.staminaText.innerText = `${Math.round(player.stamina)}%`;
+  elements.staminaFill.style.width = `${(player.stamina / player.maxStamina) * 100}%`;
+  elements.ammoCurrent.innerText = `${player.gun.currentAmmo}`;
+  elements.ammoMax.innerText = `${player.gun.maxAmmo}`;
+
+  if (player.gun.isReloading) elements.reloadingMsg.classList.remove('hidden');
+  else elements.reloadingMsg.classList.add('hidden');
+
+  if (nearestLoot) {
+    elements.interactionPrompt.classList.remove('hidden');
+    elements.interactionText.innerText = `拾取 ${nearestLoot.name}`;
+  } else {
+    elements.interactionPrompt.classList.add('hidden');
+  }
+
+  if (player.isExtracting) {
+    elements.extractProgressBar.style.width = `${(player.extractTimer / player.extractDuration) * 100}%`;
+    elements.extractTimeText.innerText = `${player.extractTimer.toFixed(1)}s`;
+  }
+
+  elements.lootCount.innerText = `${player.inventory.length} / ${player.maxSlots}`;
+}
+
+export function refreshInventoryGrid(player) {
+  elements.lootGrid.innerHTML = '';
+  for (const loot of player.inventory) {
+    const slot = document.createElement('div');
+    slot.className = 'loot-slot';
+    slot.innerText = loot.emoji;
+    slot.title = loot.name;
+    elements.lootGrid.appendChild(slot);
+  }
+}
+
+export function pushNotification(text) {
+  const item = document.createElement('div');
+  item.className = 'feed-item';
+  item.innerHTML = `<span>💬</span><span>${text}</span>`;
+  elements.notificationFeed.appendChild(item);
+  setTimeout(() => {
+    if (item.parentElement) item.parentElement.removeChild(item);
+  }, 4000);
+}
+
+export function getElements() { return elements; }

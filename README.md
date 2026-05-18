@@ -1,50 +1,100 @@
-# 🦅 Emoji Delta - 2D 网页端“搜打撤”游戏
+# 🦅 Emoji Delta - 2D 网页端"搜打撤"游戏
 
-本项目是基于 HTML5 Canvas 和纯原生 ES Modules 开发的硬核 2D “搜打撤”（Extraction Shooter）游戏客户端引擎。严格遵循 `CLAUDE.md` 与 `Master.md` 设计规格。
+基于 HTML5 Canvas 和纯原生 ES Modules 开发的硬核 2D "搜打撤"（Extraction Shooter）游戏。严格遵循 `CLAUDE.md` 与 `Master.md` 设计规格。
 
-## 🎯 当前状态：阶段一完美交付 (Phase 1 Completed)
+## 📁 项目结构
 
-在阶段一中，我们构建了高规格的纯前端物理、精细化视野遮挡机制与时间步长主循环：
+```
+Emoji Delta/
+├── client/                  # 前端客户端
+│   ├── index.html          # 主页面（含开始画面 + HUD）
+│   ├── style.css           # Glassmorphism UI（Google Fonts）
+│   ├── maps/
+│   │   └── factory_01.json # JSON 固定地图（数据驱动）
+│   ├── data/
+│   │   └── loot.json       # JSON 战利品定义（20 种，与代码解耦）
+│   └── js/
+│       ├── main.js         # 入口、游戏主循环、世界初始化
+│       ├── constants.js    # 世界常量、配置
+│       ├── entities.js     # Player, Bot, Loot, Wall 等实体类
+│       ├── input.js        # 键盘/鼠标输入管理
+│       ├── physics.js      # AABB 碰撞、射线检测、玩家移动
+│       ├── ai.js           # Bot AI 状态机（视觉锥、反应延迟）
+│       ├── maploader.js    # JSON 地图加载与解析
+│       ├── lootdata.js     # 战利品数据加载器（加权随机、按ID查找）
+│       ├── sound.js        # Web Audio API 程序化音效（try-catch）
+│       ├── renderer.js     # Canvas 渲染（棋盘格背景、实体、准星）
+│       ├── hud.js          # HUD 更新、背包、通知
+│       └── ui.js           # 开始画面、结算弹窗
+├── server/                  # C# 权威服务器 (Phase 2)
+│   ├── EmojiDelta.Server.csproj
+│   ├── Program.cs          # 入口
+│   ├── GameServer.cs       # WebSocket 服务、60Hz 游戏循环
+│   ├── GameWorld.cs        # 权威世界状态、碰撞、Bot AI
+│   ├── PlayerSession.cs    # 玩家状态、反作弊
+│   ├── Messages.cs         # WebSocket 协议定义
+│   └── SpatialHash.cs      # O(1) 空间哈希
+├── Master.md               # 游戏设计文档
+├── CLAUDE.md               # AI 开发指南
+└── README.md
+```
 
-1. **时间步长主循环 (Delta Time Loop)**:
-   - 采用 `requestAnimationFrame` 驱动主循环，严格控制帧率独立计算 (`dt`)。
-   - 实现了精巧的渲染层级管理：暗色调网格地板 -> 静态墙体/树木 (🧱, 🌲) -> 战利品 (💵, 💎, 📦) -> 动态实体 (特工 🥷, Bot 🧟/👮) -> 黑暗视野战争迷雾遮罩 (`destination-out` 挖空) -> 极具质感与未来战术感的 Glassmorphism UI 界面。
+## 🎯 当前状态：Phase 3 完成
 
-2. **预测碰撞与贴墙滑动 (AABB Collision)**:
-   - 移动前基于向量计算预测位置，沿 X 和 Y 轴分别做 AABB 碰撞检测。
-   - 遇到墙体阻挡自动滑移，带来极为顺畅的操作手感。
+### Phase 1：纯前端物理引擎
+- 棋盘格黑灰背景 + Google Fonts（Inter / Outfit / JetBrains Mono）
+- Delta Time 主循环 | AABB 碰撞与贴墙滑动
+- Hitscan 射击 + 动态散布
+- 战利品搜寻与直升机撤离 | Glassmorphism HUD
+- 中文开始画面 + 全中文界面
 
-3. **硬核开火与动态散布系统 (Combat & Hitscan)**:
-   - 鼠标指引目标射击角度，依据特工的移动与冲刺状态实时计算动态散布圆环大小。
-   - 瞬间射线投射碰撞检测（Hitscan），精确命中墙体或 Bot，触发丰富的火花微粒与击杀反馈。
+### Phase 2：C# 权威服务器
+- .NET 8 WebSocket 服务器，60Hz Tick
+- O(1) 空间哈希碰撞检测
+- 速度异常检测（反加速挂）
+- 权威射击判定 | 序列号客户端预测
+- 状态快照广播 + 声音事件同步
 
-4. **实时射线投射与战争迷雾 (LoS Raycasting Fog of War)**:
-   - 实时向周围发射数百条探测射线，与砖墙等遮挡物进行精确求交。
-   - 生成闭合多边形视野区域，动态挖空深色迷雾，完美再现拟真的视野遮蔽。
+### Phase 3：JSON 固定地图 + 数据驱动战利品 + 增强 AI + 音效
+- **JSON 地图系统**：`factory_01.json` 数据驱动，图块网格 + 出生点 + 战利品点（含权重）+ Bot 巡逻节点 + 撤离点
+- **数据驱动战利品**：`loot.json` 定义 20 种战利品（id / emoji / name / value / weight / onPickup），新增即改 JSON，零代码修改
+- **增强 Bot AI**：60° 视觉锥（不再 360° 感知）→ 0.3s 反应延迟 → 5s 脱离视线后丢失仇恨 → 0.5s AI Tick 降频
+- **战利品类型**：💵 现金 | 💎 宝石 | 🔫 武器×3 | 🛡️ 护甲×2 | 💊 医疗包×2 | 🧨 手榴弹 | 📦 弹药×3 | 🔑 钥匙卡×2 | 📿 金项链 | 💾 加密U盘 | 🏷️ 身份牌
+- **拾取效果**：医疗包 `heal_50` / 外科手术包 `heal_100`（`onPickup` 字段驱动）
+- **程序化音效**（Web Audio API，带 try-catch 静默降级）：枪声、命中声、拾取声、撤离倒计时蜂鸣
 
-5. **战利品搜寻与直升机撤离 (In-Raid Extraction Mechanics)**:
-   - 靠近地上的战利品显示操作提示，按 `F` 拾取至背包，Tab 键可展开或隐藏临时战利品抽屉。
-   - 靠近直升机 `🚁` 触发 10 秒撤离倒计时。存活完成倒计时即可成功带出贵重物资！
+## 🛠️ 运行方式
+
+### 客户端（独立运行）
+```bash
+cd client
+python3 -m http.server 8080
+# 打开 http://localhost:8080
+```
+
+### 服务端
+```bash
+cd server
+dotnet run
+# 监听 http://localhost:5000/
+```
 
 ## 🎮 操作指南
 
-- **W, A, S, D**：控制移动
-- **Shift (按住)**：战术冲刺（消耗体力）
-- **鼠标移动**：准星瞄准（动态显示散布范围）
-- **鼠标左键**：开火射击
-- **R**：手动换弹
-- **F**：交互 / 拾取身边的战利品
-- **Tab**：展开 / 折叠战利品背包栏
+| 按键 | 功能 |
+|------|------|
+| W A S D | 移动 |
+| Shift | 战术冲刺 |
+| 鼠标移动 | 瞄准 |
+| 鼠标左键 | 开火 |
+| R | 换弹 |
+| F | 拾取战利品 |
+| Tab | 展开背包 |
 
-## 🛠️ 本地运行体验
+## 🧠 Bot AI 行为（Phase 3）
 
-您可以通过运行任意本地 HTTP 服务器直接体验：
-
-```bash
-npx serve
-# 或
-npx http-server
-# 或
-python3 -m http.server
-```
-打开提示的本地地址（如 `http://localhost:3000`）即可畅玩。
+| 状态 | 触发条件 | 行为 |
+|------|---------|------|
+| 巡逻 (Patrol) | 默认状态 | 在巡逻节点范围内随机移动 |
+| 调查 (Investigate) | 听到枪声 | 移向声源，停留 3 秒后返回巡逻 |
+| 接敌 (Aggro) | 60° 视觉锥内发现玩家 + LoS | 0.3s 反应后开火，5s 未发现则脱离 |
