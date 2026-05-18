@@ -43,9 +43,24 @@
       <div id="operator-cards" class="op-selector">
         <!-- Populated by initOperatorPicker() -->
       </div>
+      <div id="loadout-panel" class="stash-panel">
+        <div class="stash-header"><span>⚔️ 已装备 (带入局内)</span><span class="stash-coins">最多4件</span></div>
+        <div id="equipped-grid" class="stash-grid"></div>
+      </div>
       <div id="stash-panel" class="stash-panel">
-        <div class="stash-header"><span>🏚️ 仓库</span><span id="stash-coins" class="stash-coins">💰 0</span></div>
+        <div class="stash-header">
+          <span>🏚️ 仓库</span>
+          <span id="stash-coins" class="stash-coins">💰 0</span>
+        </div>
         <div id="stash-grid" class="stash-grid"></div>
+        <div class="stash-actions">
+          <button id="sell-btn" class="small-btn sell-btn" disabled>💸 出售选中</button>
+          <button id="equip-btn" class="small-btn equip-btn" disabled>⚔️ 装备</button>
+        </div>
+      </div>
+      <div id="shop-panel" class="stash-panel">
+        <div class="stash-header"><span>🏪 商店</span><span class="stash-coins">点击购买</span></div>
+        <div id="shop-grid" class="shop-grid"></div>
       </div>
       <button id="deploy-btn" class="deploy-btn">部 署 行 动</button>
       <p class="start-version">Phase 4 · 局外经济系统</p>

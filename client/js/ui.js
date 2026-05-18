@@ -1,5 +1,5 @@
 // ui.js - Start screen, game over modal, victory screen, login
-import { getCoins, setUsername, getUsername, loadProfile, getStash } from './economy.js';
+import { getCoins, setUsername, getUsername, loadProfile, getStash, sellStashItem, equipItem, unequipItem, getEquipped, clearEquipped } from './economy.js';
 
 const resultModal = document.getElementById('result-modal');
 const resultTitle = document.getElementById('result-title');
@@ -47,36 +47,126 @@ export function showStartScreen() {
   refreshStashUI();
 }
 
+let selectedStashIdx = -1;
+
 function refreshStashUI() {
   const grid = document.getElementById('stash-grid');
   const coinsEl = document.getElementById('stash-coins');
+  const equipGrid = document.getElementById('equipped-grid');
+  const sellBtn = document.getElementById('sell-btn');
+  const equipBtn = document.getElementById('equip-btn');
   if (!grid) return;
 
   const stash = getStash();
   const coins = getCoins();
+  const equipped = getEquipped();
 
   if (coinsEl) coinsEl.innerText = `💰 ${coins.toLocaleString()}`;
   grid.innerHTML = '';
+  selectedStashIdx = -1;
+  if (sellBtn) sellBtn.disabled = true;
+  if (equipBtn) equipBtn.disabled = true;
 
   if (stash.length === 0) {
-    grid.innerHTML = '<span class="stash-empty">仓库空空如也 — 完成撤离获取战利品</span>';
-    return;
+    grid.innerHTML = '<span class="stash-empty">仓库空空如也</span>';
+  } else {
+    const display = stash.slice(0, 32);
+    for (let i = 0; i < display.length; i++) {
+      const item = display[i];
+      const el = document.createElement('div');
+      el.className = 'stash-item';
+      el.innerText = item.emoji || '📦';
+      el.title = `${item.name || '物品'} (价值 $${(item.value || 0).toLocaleString()})`;
+      el.addEventListener('click', () => {
+        grid.querySelectorAll('.stash-item').forEach(c => c.classList.remove('selected'));
+        el.classList.add('selected');
+        selectedStashIdx = i;
+        if (sellBtn) sellBtn.disabled = false;
+        if (equipBtn) equipBtn.disabled = equipped.length >= 4;
+      });
+      grid.appendChild(el);
+    }
   }
 
-  // Show up to 16 items
-  const display = stash.slice(0, 16);
-  for (const item of display) {
-    const el = document.createElement('div');
-    el.className = 'stash-item';
-    el.innerText = item.emoji || '📦';
-    el.title = `${item.name || '物品'} ($${(item.value || 0).toLocaleString()})`;
-    grid.appendChild(el);
+  // Equipped loadout
+  if (equipGrid) {
+    equipGrid.innerHTML = '';
+    if (equipped.length === 0) {
+      equipGrid.innerHTML = '<span class="stash-empty">未装备物品 — 从仓库中选择装备</span>';
+    } else {
+      for (let i = 0; i < equipped.length; i++) {
+        const item = equipped[i];
+        const el = document.createElement('div');
+        el.className = 'stash-item';
+        el.innerText = item.emoji || '📦';
+        el.title = `${item.name} (点击卸下)`;
+        el.addEventListener('click', () => {
+          unequipItem(i);
+          refreshStashUI();
+        });
+        equipGrid.appendChild(el);
+      }
+    }
   }
-  if (stash.length > 16) {
-    const more = document.createElement('span');
-    more.className = 'stash-empty';
-    more.innerText = `...及其他 ${stash.length - 16} 件`;
-    grid.appendChild(more);
+
+  // Sell button
+  if (sellBtn) {
+    sellBtn.onclick = () => {
+      if (selectedStashIdx >= 0) {
+        const price = sellStashItem(selectedStashIdx);
+        if (price > 0) {
+          refreshStashUI();
+          refreshShopUI();
+        }
+      }
+    };
+  }
+
+  // Equip button
+  if (equipBtn) {
+    equipBtn.onclick = () => {
+      if (selectedStashIdx >= 0) {
+        if (equipItem(selectedStashIdx)) {
+          refreshStashUI();
+        }
+      }
+    };
+  }
+}
+
+let shopItems = [];
+export function initShopUI(items) {
+  shopItems = items;
+  refreshShopUI();
+}
+
+function refreshShopUI() {
+  const grid = document.getElementById('shop-grid');
+  if (!grid || !shopItems.length) return;
+  const coins = getCoins();
+
+  grid.innerHTML = '';
+  for (let i = 0; i < shopItems.length; i++) {
+    const item = shopItems[i];
+    const el = document.createElement('div');
+    el.className = 'shop-item';
+    const canAfford = coins >= item.price;
+    el.style.opacity = canAfford ? '1' : '0.4';
+    el.innerHTML = `
+      <span class="shop-emoji">${item.emoji}</span>
+      <span class="shop-name">${item.name}</span>
+      <span class="shop-price">$${item.price.toLocaleString()}</span>
+    `;
+    el.title = canAfford ? `购买 ${item.name}` : '金币不足';
+    el.addEventListener('click', async () => {
+      const { buyItem } = await import('./shopdata.js');
+      const result = buyItem(i);
+      if (result.success) {
+        refreshShopUI();
+        refreshStashUI();
+      }
+    });
+    grid.appendChild(el);
   }
 }
 

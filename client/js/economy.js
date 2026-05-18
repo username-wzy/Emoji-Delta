@@ -101,3 +101,57 @@ export function getProfile() {
   if (!profile) loadProfile();
   return profile;
 }
+
+/** Sell item from stash by index, returns coins gained */
+export function sellStashItem(index) {
+  if (!profile) loadProfile();
+  if (index >= 0 && index < profile.stash.length) {
+    const item = profile.stash[index];
+    const sellPrice = Math.floor((item.value || 1000) * 0.4); // 40% resale
+    profile.stash.splice(index, 1);
+    profile.coins += sellPrice;
+    saveProfile();
+    return sellPrice;
+  }
+  return 0;
+}
+
+/** Get equipped loadout items */
+export function getEquipped() {
+  if (!profile) loadProfile();
+  if (!profile.equipped) profile.equipped = [];
+  return profile.equipped;
+}
+
+/** Equip stash item to loadout (max 4 items) */
+export function equipItem(stashIndex) {
+  if (!profile) loadProfile();
+  if (!profile.equipped) profile.equipped = [];
+  if (stashIndex >= 0 && stashIndex < profile.stash.length && profile.equipped.length < 4) {
+    const item = profile.stash.splice(stashIndex, 1)[0];
+    profile.equipped.push(item);
+    saveProfile();
+    return true;
+  }
+  return false;
+}
+
+/** Unequip item back to stash */
+export function unequipItem(equipIndex) {
+  if (!profile) loadProfile();
+  if (!profile.equipped) profile.equipped = [];
+  if (equipIndex >= 0 && equipIndex < profile.equipped.length) {
+    const item = profile.equipped.splice(equipIndex, 1)[0];
+    profile.stash.push(item);
+    saveProfile();
+    return true;
+  }
+  return false;
+}
+
+/** Clear equipped loadout (items lost on death) */
+export function clearEquipped() {
+  if (!profile) loadProfile();
+  profile.equipped = [];
+  saveProfile();
+}

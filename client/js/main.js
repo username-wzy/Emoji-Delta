@@ -6,13 +6,14 @@ import { aabb, getPlayerBox, raycastHitscan, movePlayer } from './physics.js';
 import { updateBots } from './ai.js';
 import { render } from './renderer.js';
 import { initHUD, updateHUD, refreshInventoryGrid, pushNotification, getElements } from './hud.js';
-import { showStartScreen, hideStartScreen, onDeploy, showGameOver, showVictory, onRestart, showLoginScreen, onLogin } from './ui.js';
+import { showStartScreen, hideStartScreen, onDeploy, showGameOver, showVictory, onRestart, showLoginScreen, onLogin, initShopUI } from './ui.js';
+import { loadShopData } from './shopdata.js';
 import { loadMap, buildWorldFromMap } from './maploader.js';
 import { playShootSound, playHitSound, playPickupSound, playExtractionBeep } from './sound.js';
 import { randomLootType, getLootDef, loadLootData } from './lootdata.js';
 import { loadOperatorData, defaultOperator, getOperatorDef, allOperators } from './operatordata.js';
 import { loadBotData } from './botdata.js';
-import { addCoins, getCoins, addToStash } from './economy.js';
+import { addCoins, getCoins, addToStash, clearEquipped } from './economy.js';
 
 // ---- Canvas setup ----
 const canvas = /** @type {HTMLCanvasElement} */ (document.getElementById('gameCanvas'));
@@ -195,6 +196,7 @@ function update(dt) {
     pushNotification(`⚠️ 遭到 ${botResult.bot.emoji} 攻击！`);
     if (player.hp <= 0) {
       isGameOver = true;
+      clearEquipped(); // lose equipped items on death
       showGameOver();
     }
   }
@@ -299,10 +301,12 @@ function initOperatorPicker() {
 }
 
 // Login → Start screen flow
-Promise.all([loadLootData(), loadOperatorData(), loadBotData()]).then(() => {
+Promise.all([loadLootData(), loadOperatorData(), loadBotData(), loadShopData()]).then(() => {
   initOperatorPicker();
   showLoginScreen();
   onLogin((name) => {
+    initShopUI([]);
+    import('./shopdata.js').then(m => initShopUI(m.getShopItems()));
     showStartScreen();
   });
 });

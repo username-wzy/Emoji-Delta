@@ -263,6 +263,90 @@ body, html {
   text-align: center; padding: 8px;
 }
 
+.stash-item.selected {
+  border-color: var(--accent-amber);
+  background: rgba(245, 158, 11, 0.15);
+  box-shadow: 0 0 8px rgba(245, 158, 11, 0.3);
+}
+
+.stash-actions {
+  display: flex; gap: 8px; margin-top: 8px;
+  justify-content: center;
+}
+
+.small-btn {
+  padding: 8px 16px;
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 8px;
+  background: rgba(255,255,255,0.05);
+  color: var(--text-main);
+  font-family: var(--font-sans);
+  font-size: 0.8rem; font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.small-btn:hover:not(:disabled) {
+  border-color: var(--accent-cyan);
+  background: rgba(6,182,212,0.1);
+}
+
+.small-btn:disabled {
+  opacity: 0.3; cursor: not-allowed;
+}
+
+.sell-btn:hover:not(:disabled) {
+  border-color: var(--accent-rose);
+  background: rgba(244,63,94,0.1);
+}
+
+.equip-btn:hover:not(:disabled) {
+  border-color: var(--accent-emerald);
+  background: rgba(16,185,129,0.1);
+}
+
+/* Shop Grid */
+.shop-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  max-height: 180px;
+  overflow-y: auto;
+}
+
+.shop-grid::-webkit-scrollbar { width: 4px; }
+.shop-grid::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+
+.shop-item {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 2px;
+  padding: 8px 4px;
+  background: rgba(0,0,0,0.4);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.shop-item:hover {
+  border-color: var(--accent-cyan);
+  background: rgba(6,182,212,0.08);
+  transform: translateY(-2px);
+}
+
+.shop-emoji { font-size: 1.5rem; }
+
+.shop-name {
+  font-size: 0.6rem; color: var(--text-sub);
+  text-align: center; line-height: 1.2;
+}
+
+.shop-price {
+  font-family: var(--font-mono);
+  font-size: 0.65rem; font-weight: 700;
+  color: var(--accent-amber);
+}
+
 /* ========== HUD OVERLAY ========== */
 #hud {
   position: absolute; top: 0; left: 0;
