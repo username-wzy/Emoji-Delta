@@ -1,27 +1,17 @@
-// ai.js - Enhanced Bot AI FSM (Phase 3: vision cone, reaction delay, tick-throttle)
+// ai.js - Aggressive Bot AI FSM (wide vision, active scanning, alert spread)
 import { hasLineOfSight } from './physics.js';
 
-const VISION_CONE = Math.PI / 3;  // 60° (30° each side)
-const AGGRO_LOSS_TIME = 5.0;       // seconds out of sight → lose aggro
-const AI_TICK_INTERVAL = 0.5;      // throttle AI decisions to save CPU
-const INVESTIGATE_TIME = 3.0;      // stay at investigation point
-
-function inVisionCone(bot, targetX, targetY) {
-  const dx = targetX - bot.x;
-  const dy = targetY - bot.y;
-  const dist = Math.hypot(dx, dy);
-  if (dist > bot.visionRange) return false;
-  const angleToTarget = Math.atan2(dy, dx);
-  let diff = angleToTarget - bot.facingAngle;
-  while (diff > Math.PI) diff -= Math.PI * 2;
-  while (diff < -Math.PI) diff += Math.PI * 2;
-  return Math.abs(diff) <= VISION_CONE / 2;
-}
+const VISION_CONE = Math.PI * 0.56;     // 100° wide vision
+const AGGRO_LOSS_TIME = 6.0;
+const AI_TICK_INTERVAL = 0.25;          // faster checks
+const INVESTIGATE_TIME = 4.0;
+const SCAN_SPEED = 1.5;                 // radians/sec scanning when idle
 
 export function updateBots(dt, bots, player, soundBlips, walls) {
   let anyFired = false;
   let anyHit = false;
   let hitBot = null;
+  const nowAggroBots = []; // track aggro bots for alert spread
 
   for (const bot of bots) {
     if (bot.hp <= 0) continue;
@@ -43,7 +33,11 @@ export function updateBots(dt, bots, player, soundBlips, walls) {
         bot.targetY = player.y;
         bot.aggroLossTimer = AGGRO_LOSS_TIME;
         if (bot.reactionDelay <= 0) bot.reactionDelay = bot.reactionDelayCfg;
+        nowAggroBots.push(bot);
       } else if (bot.state === 'aggro') {
+        // Track last known player position even when out of sight
+        bot.targetX = player.x;
+        bot.targetY = player.y;
         bot.aggroLossTimer -= AI_TICK_INTERVAL;
         if (bot.aggroLossTimer <= 0) {
           bot.state = 'patrol';
@@ -51,36 +45,63 @@ export function updateBots(dt, bots, player, soundBlips, walls) {
         }
       }
 
-      // Sound investigation
-      if (soundBlips.length > 0 && bot.state !== 'aggro') {
-        const latestBlip = soundBlips[soundBlips.length - 1];
-        const blipDist = Math.hypot(latestBlip.x - bot.x, latestBlip.y - bot.y);
-        if (blipDist <= latestBlip.radius) {
+      // Sound investigation (gunshots attract attention)
+      if (soundBlips.length > 0 && bot.state === 'patrol') {
+        for (let i = soundBlips.length - 1; i >= 0; i--) {
+          const blip = soundBlips[i];
+          const blipDist = Math.hypot(blip.x - bot.x, blip.y - bot.y);
+          if (blipDist <= blip.radius) {
+            bot.state = 'investigate';
+            bot.targetX = blip.x + (Math.random() - 0.5) * 80;
+            bot.targetY = blip.y + (Math.random() - 0.5) * 80;
+            bot.investigateTimer = INVESTIGATE_TIME;
+            break;
+          }
+        }
+      }
+
+      // Proximity alert: if player is very close, detect even without vision cone
+      if (bot.state === 'patrol' && distToPlayer < 120) {
+        // Player is very close - "hear" footsteps
+        bot.state = 'investigate';
+        bot.targetX = player.x + (Math.random() - 0.5) * 60;
+        bot.targetY = player.y + (Math.random() - 0.5) * 60;
+        bot.investigateTimer = 2.0;
+      }
+    }
+
+    // Alert spread: if any bot is aggro, nearby patrol bots investigate
+    if (bot.state === 'patrol') {
+      for (const aggroBot of nowAggroBots) {
+        const alertDist = Math.hypot(aggroBot.x - bot.x, aggroBot.y - bot.y);
+        if (alertDist < 350) {
           bot.state = 'investigate';
-          bot.targetX = latestBlip.x + (Math.random() - 0.5) * 100;
-          bot.targetY = latestBlip.y + (Math.random() - 0.5) * 100;
+          bot.targetX = player.x + (Math.random() - 0.5) * 120;
+          bot.targetY = player.y + (Math.random() - 0.5) * 120;
           bot.investigateTimer = INVESTIGATE_TIME;
+          break;
         }
       }
     }
 
-    // Reaction delay for firing
+    // Reaction delay
     if (bot.reactionDelay > 0) {
       bot.reactionDelay -= dt;
     }
 
-    // Patrol behavior
+    // Patrol: scan environment by rotating facing angle
     if (bot.state === 'patrol') {
+      bot.facingAngle += SCAN_SPEED * dt * (Math.random() > 0.5 ? 1 : -1);
       bot.patrolTimer -= dt;
       if (bot.patrolTimer <= 0) {
         if (bot.patrolOrigin) {
           bot.targetX = bot.patrolOrigin.x + (Math.random() - 0.5) * (bot.patrolRadius || 200) * 2;
           bot.targetY = bot.patrolOrigin.y + (Math.random() - 0.5) * (bot.patrolRadius || 200) * 2;
         } else {
-          bot.targetX = bot.x + (Math.random() - 0.5) * 400;
-          bot.targetY = bot.y + (Math.random() - 0.5) * 400;
+          bot.targetX = bot.x + (Math.random() - 0.5) * 500;
+          bot.targetY = bot.y + (Math.random() - 0.5) * 500;
         }
-        bot.patrolTimer = 2 + Math.random() * 3;
+        bot.patrolTimer = 1.5 + Math.random() * 2.5;
       }
     }
 
@@ -92,11 +113,16 @@ export function updateBots(dt, bots, player, soundBlips, walls) {
       }
     }
 
+    // Aggro: update facing toward player
+    if (bot.state === 'aggro') {
+      bot.facingAngle = Math.atan2(player.y - bot.y, player.x - bot.x);
+    }
+
     // Movement towards target
     const moveDist = Math.hypot(bot.targetX - bot.x, bot.targetY - bot.y);
-    if (moveDist > 30) {
+    if (moveDist > 20) {
       const angle = Math.atan2(bot.targetY - bot.y, bot.targetX - bot.x);
-      bot.facingAngle = angle; // update facing direction
+      if (bot.state !== 'aggro') bot.facingAngle = angle;
       let nextX = bot.x + Math.cos(angle) * bot.speed * dt;
       let nextY = bot.y + Math.sin(angle) * bot.speed * dt;
 
@@ -114,7 +140,7 @@ export function updateBots(dt, bots, player, soundBlips, walls) {
       else { bot.targetX = bot.x + (Math.random() - 0.5) * 200; bot.targetY = bot.y + (Math.random() - 0.5) * 200; }
     }
 
-    // Combat: fire only after reaction delay
+    // Combat
     if (bot.fireCooldown > 0) bot.fireCooldown -= dt;
     if (bot.state === 'aggro' && bot.reactionDelay <= 0 &&
         distToPlayer < bot.attackRange && bot.fireCooldown <= 0) {
@@ -137,10 +163,20 @@ export function updateBots(dt, bots, player, soundBlips, walls) {
         anyFired = true;
         anyHit = true;
         hitBot = bot;
-      } else {
-        anyFired = true; // fired but missed (no LoS)
       }
     }
   }
   return { hit: anyHit, fired: anyFired, bot: hitBot };
+}
+
+function inVisionCone(bot, targetX, targetY) {
+  const dx = targetX - bot.x;
+  const dy = targetY - bot.y;
+  const dist = Math.hypot(dx, dy);
+  if (dist > bot.visionRange) return false;
+  const angleToTarget = Math.atan2(dy, dx);
+  let diff = angleToTarget - bot.facingAngle;
+  while (diff > Math.PI) diff -= Math.PI * 2;
+  while (diff < -Math.PI) diff += Math.PI * 2;
+  return Math.abs(diff) <= VISION_CONE / 2;
 }

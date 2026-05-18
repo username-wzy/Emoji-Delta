@@ -30,6 +30,7 @@ let soundBlips = [];
 let nearestLoot = null;
 let camera = { x: 0, y: 0 };
 let isGameOver = false;
+let gameStarted = false; // prevents update logic until deploy
 let shakeAmount = 0;
 let helipad = { x: WORLD_WIDTH - 400, y: 300, w: 220, h: 220, emoji: '🚁' };
 let extractions = []; // multiple extraction points
@@ -41,6 +42,7 @@ let selectedWeaponIdx = 0;
 async function initWorld() {
   walls = []; bots = []; loots = []; particles = []; soundBlips = [];
   isGameOver = false;
+  gameStarted = true; // unlock combat logic
   const opDef = getOperatorDef(selectedOpId || defaultOperator().id);
   player = new Player(opDef);
   player.coins = getCoins();
@@ -266,7 +268,7 @@ function applyWeaponStats() {
 
 // ---- Update loop ----
 function update(dt) {
-  if (isGameOver) return;
+  if (isGameOver || !gameStarted) return;
   if (shakeAmount > 0) shakeAmount = Math.max(0, shakeAmount - dt * 20);
 
   mouse.worldX = mouse.x + camera.x;
