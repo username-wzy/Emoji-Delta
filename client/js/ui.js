@@ -1,5 +1,5 @@
 // ui.js - Start screen, game over modal, victory screen, login
-import { getCoins, setUsername, getUsername, loadProfile, getStash, sellStashItem, equipItem, unequipItem, getEquipped, clearEquipped } from './economy.js';
+import { getCoins, setUsername, getUsername, loadProfile, getStash, sellStashItem, equipItem, unequipItem, getEquipped, clearEquipped, setPassword, checkPassword, hasPassword } from './economy.js';
 
 const resultModal = document.getElementById('result-modal');
 const resultTitle = document.getElementById('result-title');
@@ -11,6 +11,7 @@ const deployBtn = document.getElementById('deploy-btn');
 const hudOverlay = document.getElementById('hud');
 const loginScreen = document.getElementById('login-screen');
 const usernameInput = document.getElementById('username-input');
+const passwordInput = document.getElementById('password-input');
 const loginBtn = document.getElementById('login-btn');
 
 // ---- Login ----
@@ -18,10 +19,15 @@ export function showLoginScreen() {
   startScreen.classList.add('hidden');
   hudOverlay.classList.add('hidden');
   loginScreen.classList.remove('hidden');
-  // Pre-fill if username exists
   loadProfile();
   const existing = getUsername();
   if (existing) usernameInput.value = existing;
+  if (passwordInput) passwordInput.value = '';
+  if (hasPassword()) {
+    passwordInput.placeholder = '输入密码...';
+  } else {
+    passwordInput.placeholder = '设置密码 (首次登录)';
+  }
 }
 
 export function hideLoginScreen() {
@@ -29,15 +35,28 @@ export function hideLoginScreen() {
 }
 
 export function onLogin(callback) {
-  loginBtn.addEventListener('click', () => {
+  const doLogin = () => {
     const name = usernameInput.value.trim() || '特工';
+    const pass = passwordInput?.value || '';
+    if (hasPassword() && !checkPassword(pass)) {
+      if (passwordInput) { passwordInput.style.borderColor = '#f43f5e'; passwordInput.value = ''; }
+      return;
+    }
+    if (!hasPassword() && pass) {
+      setPassword(pass);
+    }
     setUsername(name);
     hideLoginScreen();
+    if (passwordInput) passwordInput.style.borderColor = '';
     callback(name);
-  });
-  usernameInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') loginBtn.click();
-  });
+  };
+  loginBtn.addEventListener('click', doLogin);
+  usernameInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') passwordInput?.focus(); });
+  if (passwordInput) {
+    passwordInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') doLogin();
+    });
+  }
 }
 
 // ---- Start screen ----

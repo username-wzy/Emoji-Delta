@@ -584,6 +584,29 @@ body, html {
   letter-spacing: 0.05em;
 }
 
+.weapon-slots {
+  display: flex; gap: 6px; margin-top: 8px;
+}
+
+.wp-slot {
+  width: 36px; height: 36px;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(0,0,0,0.5);
+  border: 2px solid rgba(255,255,255,0.1);
+  border-radius: 8px; font-size: 1.2rem;
+}
+
+.wp-slot.active {
+  border-color: var(--accent-cyan);
+  box-shadow: 0 0 8px rgba(6,182,212,0.3);
+}
+
+.item-counts {
+  display: flex; gap: 10px; margin-top: 4px;
+  font-family: var(--font-mono); font-size: 0.75rem;
+  color: var(--text-sub); font-weight: 600;
+}
+
 @keyframes flash {
   from { opacity: 1; } to { opacity: 0.3; }
 }

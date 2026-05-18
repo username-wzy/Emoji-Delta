@@ -60,6 +60,18 @@ export function updateHUD(player, nearestLoot) {
 
   const coinEl = document.getElementById('coins-display');
   if (coinEl) coinEl.innerText = `💰 ${player.coins?.toLocaleString() || 0}`;
+
+  // Weapon slots
+  const w1 = document.getElementById('weapon-slot-1');
+  const w2 = document.getElementById('weapon-slot-2');
+  if (w1) w1.innerText = player.weaponSlots?.[0]?.emoji || '🔫';
+  if (w2) w2.innerText = player.weaponSlots?.[1]?.emoji || '—';
+
+  // Grenade/Med counts
+  const gCount = document.getElementById('grenade-count');
+  const mCount = document.getElementById('medkit-count');
+  if (gCount) gCount.innerText = `🧨 ${player.grenadeCount || 0}`;
+  if (mCount) mCount.innerText = `💊 ${player.medkitCount || 0}`;
 }
 
 export function refreshInventoryGrid(player) {

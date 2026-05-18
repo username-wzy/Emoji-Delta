@@ -35,8 +35,10 @@ export function render(ctx, canvas, camera, state) {
   }
   ctx.stroke();
 
-  // 3. Helipad
-  drawHelipad(ctx, helipad);
+  // 3. Extraction points
+  for (const ext of (state.extractions || [state.helipad])) {
+    drawExtraction(ctx, ext);
+  }
 
   // 4. Walls
   for (const wall of walls) {
@@ -127,14 +129,17 @@ function drawCheckerboard(ctx, canvas, camera) {
   }
 }
 
-function drawHelipad(ctx, helipad) {
-  ctx.fillStyle = 'rgba(16, 185, 129, 0.15)';
+function drawExtraction(ctx, ext) {
+  ctx.fillStyle = 'rgba(16, 185, 129, 0.12)';
   ctx.strokeStyle = '#10b981';
-  ctx.lineWidth = 4;
-  ctx.fillRect(helipad.x, helipad.y, helipad.w, helipad.h);
-  ctx.strokeRect(helipad.x, helipad.y, helipad.w, helipad.h);
-  ctx.font = '72px sans-serif';
-  ctx.fillText(helipad.emoji, helipad.x + helipad.w / 2 - 36, helipad.y + helipad.h / 2 + 24);
+  ctx.lineWidth = 3;
+  ctx.setLineDash([8, 4]);
+  ctx.fillRect(ext.x, ext.y, ext.w, ext.h);
+  ctx.strokeRect(ext.x, ext.y, ext.w, ext.h);
+  ctx.setLineDash([]);
+  const fontSize = Math.min(ext.w, ext.h) * 0.5;
+  ctx.font = `${fontSize}px sans-serif`;
+  ctx.fillText(ext.emoji || '🚁', ext.x + ext.w / 2 - fontSize * 0.4, ext.y + ext.h / 2 + fontSize * 0.3);
 }
 
 function drawCrosshair(ctx, mouse, player) {

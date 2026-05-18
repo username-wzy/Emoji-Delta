@@ -19,6 +19,10 @@ function inVisionCone(bot, targetX, targetY) {
 }
 
 export function updateBots(dt, bots, player, soundBlips, walls) {
+  let anyFired = false;
+  let anyHit = false;
+  let hitBot = null;
+
   for (const bot of bots) {
     if (bot.hp <= 0) continue;
 
@@ -130,9 +134,13 @@ export function updateBots(dt, bots, player, soundBlips, walls) {
         }
         player.armor = Math.max(0, player.armor);
         player.hp = Math.max(0, player.hp);
-        return { hit: true, bot };
+        anyFired = true;
+        anyHit = true;
+        hitBot = bot;
+      } else {
+        anyFired = true; // fired but missed (no LoS)
       }
     }
   }
-  return { hit: false, bot: null };
+  return { hit: anyHit, fired: anyFired, bot: hitBot };
 }

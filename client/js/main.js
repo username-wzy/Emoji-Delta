@@ -9,11 +9,11 @@ import { initHUD, updateHUD, refreshInventoryGrid, pushNotification, getElements
 import { showStartScreen, hideStartScreen, onDeploy, showGameOver, showVictory, onRestart, showLoginScreen, onLogin, initShopUI } from './ui.js';
 import { loadShopData } from './shopdata.js';
 import { loadMap, buildWorldFromMap } from './maploader.js';
-import { playShootSound, playHitSound, playPickupSound, playExtractionBeep } from './sound.js';
+import { playShootSound, playHitSound, playPickupSound, playExtractionBeep, playEnemyShootSound, playGrenadeSound } from './sound.js';
 import { randomLootType, getLootDef, loadLootData } from './lootdata.js';
 import { loadOperatorData, defaultOperator, getOperatorDef, allOperators } from './operatordata.js';
 import { loadBotData } from './botdata.js';
-import { addCoins, getCoins, addToStash, clearEquipped } from './economy.js';
+import { addCoins, getCoins, addToStash, clearEquipped, getEquipped } from './economy.js';
 
 // ---- Canvas setup ----
 const canvas = /** @type {HTMLCanvasElement} */ (document.getElementById('gameCanvas'));
@@ -32,8 +32,11 @@ let camera = { x: 0, y: 0 };
 let isGameOver = false;
 let shakeAmount = 0;
 let helipad = { x: WORLD_WIDTH - 400, y: 300, w: 220, h: 220, emoji: '🚁' };
+let extractions = []; // multiple extraction points
 let mapName = 'DELTA-01';
 let extractionBeepTimer = 0;
+let weaponSlots = [];  // weapons brought into raid
+let selectedWeaponIdx = 0;
 
 async function initWorld() {
   walls = []; bots = []; loots = []; particles = []; soundBlips = [];
@@ -49,10 +52,34 @@ async function initWorld() {
   walls = world.walls;
   bots = world.bots;
   loots = world.loots;
-  helipad = world.helipad;
+  extractions = world.extractions || [world.helipad];
+  helipad = extractions[0] || world.helipad;
   mapName = world.mapName || 'DELTA-01';
   player.x = world.spawnX;
   player.y = world.spawnY;
+
+  // Load weapon slots from equipped items (max 2 weapons)
+  weaponSlots = [];
+  const equipped = getEquipped();
+  for (const item of equipped) {
+    if (item.id && item.id.startsWith('weapon_') && weaponSlots.length < 2) {
+      weaponSlots.push({ id: item.id, emoji: item.emoji, name: item.name });
+    }
+  }
+  // Fallback: at least the default gun
+  if (weaponSlots.length === 0) {
+    weaponSlots.push({ id: 'default', emoji: '🔫', name: player.gun.name });
+  }
+  selectedWeaponIdx = 0;
+  applyWeaponStats();
+
+  // Count grenades/meds from equipped
+  player.grenadeCount = 0;
+  player.medkitCount = 0;
+  for (const item of equipped) {
+    if (item.id === 'grenade') player.grenadeCount++;
+    if (item.id === 'medkit' || item.id === 'medkit_large') player.medkitCount++;
+  }
 
   pushNotification(`⚡ 成功部署至 ${mapName}。寻找物资并前往直升机点撤离！`);
 }
@@ -162,6 +189,81 @@ function toggleInventory() {
   getElements().inventoryDrawer.classList.toggle('hidden');
 }
 
+function throwGrenade() {
+  if (player.grenadeCount <= 0) { pushNotification('⚠️ 没有手榴弹！'); return; }
+  player.grenadeCount--;
+  playGrenadeSound();
+  pushNotification('💥 手榴弹投出！');
+
+  // Explosion at cursor position
+  const gx = mouse.worldX;
+  const gy = mouse.worldY;
+  const radius = 150;
+  const dmg = 80;
+
+  // Damage bots in range
+  for (const bot of bots) {
+    const dist = Math.hypot(bot.x - gx, bot.y - gy);
+    if (dist <= radius) {
+      bot.hp -= dmg * (1 - dist / radius);
+      bot.state = 'aggro';
+      bot.targetX = player.x;
+      bot.targetY = player.y;
+      bot.reactionDelay = 0;
+    }
+  }
+
+  // Explosion particles
+  for (let k = 0; k < 30; k++) {
+    const pAngle = Math.random() * Math.PI * 2;
+    const pSpeed = 100 + Math.random() * 300;
+    particles.push(new Particle(gx, gy, Math.cos(pAngle) * pSpeed, Math.sin(pAngle) * pSpeed, '#f59e0b', 0.3 + Math.random() * 0.3, 5 + Math.random() * 8));
+  }
+
+  // Remove dead bots
+  for (let i = bots.length - 1; i >= 0; i--) {
+    if (bots[i].hp <= 0) {
+      pushNotification(`💥 击杀 ${bots[i].emoji}`);
+      loots.push(new Loot(bots[i].x, bots[i].y, randomLootType()));
+      bots.splice(i, 1);
+    }
+  }
+
+  soundBlips.push(new SoundBlip(gx, gy, 600));
+  shakeAmount = 15;
+}
+
+function useMedkit() {
+  if (player.medkitCount <= 0) { pushNotification('⚠️ 没有医疗用品！'); return; }
+  if (player.hp >= player.maxHp) { pushNotification('⚠️ 生命值已满！'); return; }
+  player.medkitCount--;
+  player.hp = Math.min(player.maxHp, player.hp + 50);
+  pushNotification(`❤️ 使用医疗包 +50 HP (剩余 ${player.medkitCount} 个)`);
+}
+
+function switchWeapon(idx) {
+  if (idx < 0 || idx >= weaponSlots.length) return;
+  selectedWeaponIdx = idx;
+  applyWeaponStats();
+  pushNotification(`🔫 切换至 ${weaponSlots[idx].name}`);
+}
+
+function applyWeaponStats() {
+  const wp = weaponSlots[selectedWeaponIdx];
+  if (!wp || wp.id === 'default') return; // keep default gun
+  // For non-default weapons, adjust gun stats based on weapon type
+  if (wp.id === 'weapon_ak47') {
+    player.gun.name = 'AK-47'; player.gun.damage = 32; player.gun.penetration = 40;
+    player.gun.fireRate = 0.1; player.gun.magSize = 30; player.gun.currentAmmo = 30; player.gun.maxAmmo = 90; player.gun.reloadTime = 2.0;
+  } else if (wp.id === 'weapon_mp5') {
+    player.gun.name = 'MP5-SD'; player.gun.damage = 22; player.gun.penetration = 25;
+    player.gun.fireRate = 0.06; player.gun.magSize = 30; player.gun.currentAmmo = 30; player.gun.maxAmmo = 150; player.gun.reloadTime = 1.5;
+  } else if (wp.id === 'weapon_shotgun') {
+    player.gun.name = 'M870'; player.gun.damage = 45; player.gun.penetration = 20;
+    player.gun.fireRate = 0.5; player.gun.magSize = 6; player.gun.currentAmmo = 6; player.gun.maxAmmo = 24; player.gun.reloadTime = 2.5;
+  }
+}
+
 // ---- Update loop ----
 function update(dt) {
   if (isGameOver) return;
@@ -190,20 +292,30 @@ function update(dt) {
 
   // Bots (Phase 3: enhanced AI)
   const botResult = updateBots(dt, bots, player, soundBlips, walls);
+  if (botResult.fired) {
+    playEnemyShootSound(); // enemy gunshot sound
+  }
   if (botResult.hit) {
     shakeAmount = 10;
     playHitSound();
-    pushNotification(`⚠️ 遭到 ${botResult.bot.emoji} 攻击！`);
+    pushNotification(`⚠️ 遭到 ${botResult.bot?.emoji || '🧟'} 攻击！`);
     if (player.hp <= 0) {
       isGameOver = true;
-      clearEquipped(); // lose equipped items on death
+      clearEquipped();
       showGameOver();
     }
   }
 
-  // Extraction
+  // Extraction — check all points
   const pBox = getPlayerBox(player, player.x, player.y);
-  if (aabb(pBox.x, pBox.y, pBox.w, pBox.h, helipad.x, helipad.y, helipad.w, helipad.h)) {
+  let inExtraction = false;
+  for (const ext of extractions) {
+    if (aabb(pBox.x, pBox.y, pBox.w, pBox.h, ext.x, ext.y, ext.w, ext.h)) {
+      inExtraction = true;
+      break;
+    }
+  }
+  if (inExtraction) {
     if (!player.isExtracting) {
       player.isExtracting = true;
       player.extractTimer = player.extractDuration;
@@ -261,6 +373,8 @@ function update(dt) {
   camera.x += (targetCamX - camera.x) * 10 * dt;
   camera.y += (targetCamY - camera.y) * 10 * dt;
 
+  // Sync weapon/grenade/med state to player for HUD
+  player.weaponSlots = weaponSlots;
   updateHUD(player, nearestLoot);
 }
 
@@ -270,13 +384,13 @@ function loop(now) {
   const dt = Math.min((now - lastTime) / 1000, 0.1);
   lastTime = now;
   update(dt);
-  render(ctx, canvas, camera, { player, walls, bots, loots, particles, soundBlips, helipad, mouse, shakeAmount });
+  render(ctx, canvas, camera, { player, walls, bots, loots, particles, soundBlips, helipad, extractions, mouse, shakeAmount });
   requestAnimationFrame(loop);
 }
 
 // ---- Init ----
 initHUD();
-initInput(canvas, camera, interactTarget, reloadWeapon, toggleInventory);
+initInput(canvas, camera, interactTarget, reloadWeapon, toggleInventory, throwGrenade, useMedkit, switchWeapon);
 
 // ---- Operator picker on start screen ----
 function initOperatorPicker() {

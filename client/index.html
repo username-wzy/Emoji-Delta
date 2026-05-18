@@ -22,7 +22,8 @@
       <p class="start-subtitle">三角洲行动 · 搜打撤</p>
       <div class="start-divider"></div>
       <input id="username-input" class="login-input" type="text" placeholder="输入特工代号..." maxlength="16" autocomplete="off">
-      <button id="login-btn" class="deploy-btn">进 入 大 厅</button>
+      <input id="password-input" class="login-input" type="password" placeholder="输入密码..." maxlength="32" autocomplete="off" style="margin-top:8px;">
+      <button id="login-btn" class="deploy-btn">登 录 进 入</button>
       <p class="start-version">Phase 4 · 局外经济系统</p>
     </div>
   </div>
@@ -137,6 +138,14 @@
         <span id="ammo-max" class="ammo-small">120</span>
       </div>
       <div id="reloading-msg" class="reloading-text hidden">装弹中...</div>
+      <div class="weapon-slots">
+        <span id="weapon-slot-1" class="wp-slot active">🔫</span>
+        <span id="weapon-slot-2" class="wp-slot">—</span>
+      </div>
+      <div id="item-counts" class="item-counts">
+        <span id="grenade-count">🧨 0</span>
+        <span id="medkit-count">💊 0</span>
+      </div>
       <div id="coins-display" class="coins-display">💰 0</div>
     </div>
 

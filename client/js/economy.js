@@ -23,8 +23,10 @@ export function loadProfile() {
 function createDefault() {
   return {
     username: '',
-    coins: 50000,       // Starting balance per Master.md
-    stash: [],          // Items in warehouse
+    passHash: '',
+    coins: 50000,
+    stash: [],
+    equipped: [],
     createdAt: Date.now()
   };
 }
@@ -84,7 +86,7 @@ export function removeFromStash(index) {
   return false;
 }
 
-/** Get/set username */
+/** Get/set username & password */
 export function getUsername() {
   if (!profile) loadProfile();
   return profile.username || '';
@@ -94,6 +96,34 @@ export function setUsername(name) {
   if (!profile) loadProfile();
   profile.username = name;
   saveProfile();
+}
+
+/** Simple hash for client-side credential storage */
+function simpleHash(str) {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash |= 0;
+  }
+  return hash.toString(16);
+}
+
+export function setPassword(pass) {
+  if (!profile) loadProfile();
+  profile.passHash = pass ? simpleHash(pass) : '';
+  saveProfile();
+}
+
+export function checkPassword(pass) {
+  if (!profile) loadProfile();
+  if (!profile.passHash) return true; // no password set yet
+  return simpleHash(pass) === profile.passHash;
+}
+
+export function hasPassword() {
+  if (!profile) loadProfile();
+  return !!profile.passHash;
 }
 
 /** Get full profile */
@@ -123,17 +153,22 @@ export function getEquipped() {
   return profile.equipped;
 }
 
-/** Equip stash item to loadout (max 4 items) */
+/** Equip stash item to loadout (max 4 items, max 2 weapons) */
 export function equipItem(stashIndex) {
   if (!profile) loadProfile();
   if (!profile.equipped) profile.equipped = [];
-  if (stashIndex >= 0 && stashIndex < profile.stash.length && profile.equipped.length < 4) {
-    const item = profile.stash.splice(stashIndex, 1)[0];
-    profile.equipped.push(item);
-    saveProfile();
-    return true;
+  if (stashIndex < 0 || stashIndex >= profile.stash.length) return false;
+  const item = profile.stash[stashIndex];
+  // Check weapon limit
+  if (item.id && item.id.startsWith('weapon_')) {
+    const currentWeapons = profile.equipped.filter(e => e.id && e.id.startsWith('weapon_')).length;
+    if (currentWeapons >= 2) return false;
   }
-  return false;
+  if (profile.equipped.length >= 4) return false;
+  profile.stash.splice(stashIndex, 1);
+  profile.equipped.push(item);
+  saveProfile();
+  return true;
 }
 
 /** Unequip item back to stash */

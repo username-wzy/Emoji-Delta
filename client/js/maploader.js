@@ -129,24 +129,31 @@ export function buildWorldFromMap(mapData) {
     }
   }
 
-  // Parse extraction point
-  const ext = mapData.extraction;
-  if (ext) {
-    helipad.x = ext.x * ts;
-    helipad.y = ext.y * ts;
-    helipad.w = (ext.w || 3) * ts;
-    helipad.h = (ext.h || 3) * ts;
-  } else {
-    helipad.x = WORLD_WIDTH - 400;
-    helipad.y = 300;
-    helipad.w = 220;
-    helipad.h = 220;
+  // Parse extraction points
+  const extractions = [];
+  const extList = mapData.extractions || (mapData.extraction ? [mapData.extraction] : null);
+  if (extList && extList.length > 0) {
+    for (const ext of extList) {
+      extractions.push({
+        x: ext.x * ts,
+        y: ext.y * ts,
+        w: (ext.w || 3) * ts,
+        h: (ext.h || 3) * ts,
+        emoji: ext.emoji || '🚁',
+        name: ext.name || '撤离点'
+      });
+    }
   }
+  if (extractions.length === 0) {
+    extractions.push({ x: WORLD_WIDTH - 400, y: 300, w: 220, h: 220, emoji: '🚁', name: '撤离点' });
+  }
+  helipad.x = extractions[0].x; helipad.y = extractions[0].y;
+  helipad.w = extractions[0].w; helipad.h = extractions[0].h;
 
   // Parse player spawn
   const pmcSpawn = spawns.find(s => s.team === 'pmc');
   const spawnX = pmcSpawn ? pmcSpawn.x * ts + ts / 2 : 400;
   const spawnY = pmcSpawn ? pmcSpawn.y * ts + ts / 2 : WORLD_HEIGHT - 400;
 
-  return { walls, bots, loots, helipad, spawnX, spawnY, mapName: mapData.name };
+  return { walls, bots, loots, helipad, extractions, spawnX, spawnY, mapName: mapData.name };
 }
