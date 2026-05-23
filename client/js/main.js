@@ -212,6 +212,11 @@ function interactTarget() {
       player.hp = Math.min(player.maxHp, player.hp + 100);
       pushNotification('❤️ 使用外科手术包，恢复 100 HP');
     }
+    // Ammo pickup: add to gun reserve if type matches
+    if (def.ammoAmount && player.gun.ammoType === def.ammoType) {
+      player.gun.maxAmmo += def.ammoAmount;
+      pushNotification(`📦 弹药补给 +${def.ammoAmount} 发 (${def.ammoType})`);
+    }
 
     nearestLoot = null;
     refreshInventoryGrid(player);
