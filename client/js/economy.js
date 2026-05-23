@@ -193,6 +193,56 @@ export function clearEquipped() {
   saveProfile();
 }
 
+/** Batch equip — returns count equipped */
+export function equipItems(indices) {
+  if (!profile) loadProfile();
+  let count = 0;
+  // Sort descending so we can splice safely
+  const sorted = [...indices].sort((a, b) => b - a);
+  for (const idx of sorted) {
+    if (profile.equipped.length >= maxEquipSlots) break;
+    if (idx < 0 || idx >= profile.stash.length) continue;
+    const item = profile.stash[idx];
+    if (item.id && item.id.startsWith('weapon_')) {
+      const cw = profile.equipped.filter(e => e.id && e.id.startsWith('weapon_')).length;
+      if (cw >= 2) continue;
+    }
+    profile.stash.splice(idx, 1);
+    profile.equipped.push(item);
+    count++;
+  }
+  if (count > 0) saveProfile();
+  return count;
+}
+
+/** Batch sell — returns total coins gained */
+export function sellStashItems(indices) {
+  if (!profile) loadProfile();
+  let total = 0;
+  const sorted = [...indices].sort((a, b) => b - a);
+  for (const idx of sorted) {
+    if (idx < 0 || idx >= profile.stash.length) continue;
+    const item = profile.stash[idx];
+    total += Math.floor((item.value || 1000) * 0.4);
+    profile.stash.splice(idx, 1);
+  }
+  if (total > 0) { profile.coins += total; saveProfile(); }
+  return total;
+}
+
+/** Sell entire stash — returns total coins */
+export function sellAllStash() {
+  if (!profile) loadProfile();
+  let total = 0;
+  for (const item of profile.stash) {
+    total += Math.floor((item.value || 1000) * 0.4);
+  }
+  profile.stash = [];
+  profile.coins += total;
+  saveProfile();
+  return total;
+}
+
 /** Reset entire profile to defaults (clear account) */
 export function resetProfile() {
   localStorage.removeItem(STORAGE_KEY);
