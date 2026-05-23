@@ -51,6 +51,12 @@ export function updateHUD(player, nearestLoot, nearestContainer) {
   } else if (nearestContainer && nearestContainer.isSearching) {
     elements.interactionPrompt.classList.remove('hidden');
     elements.interactionText.innerText = `搜索中... ${nearestContainer.searchTimer.toFixed(1)}s`;
+  } else if (nearestLoot && nearestLoot.isSearching && nearestLoot.type === 'backpack') {
+    elements.interactionPrompt.classList.remove('hidden');
+    elements.interactionText.innerText = `搜索背包... ${nearestLoot.searchTimer.toFixed(1)}s`;
+  } else if (nearestLoot && nearestLoot.type === 'backpack') {
+    elements.interactionPrompt.classList.remove('hidden');
+    elements.interactionText.innerText = '搜索 遗落背包';
   } else if (nearestLoot) {
     elements.interactionPrompt.classList.remove('hidden');
     elements.interactionText.innerText = `拾取 ${nearestLoot.name}`;

@@ -215,6 +215,14 @@ function interactTarget() {
     return;
   }
 
+  // Backpack search (treat as mini-container with 1.5s search)
+  if (nearestLoot && nearestLoot.type === 'backpack' && !nearestLoot.isSearching && player.inventory.length < player.maxSlots) {
+    nearestLoot.isSearching = true;
+    nearestLoot.searchTimer = 1.5;
+    pushNotification('🎒 正在搜索遗落背包... (1.5秒)');
+    return;
+  }
+
   // Loot pickup
   if (nearestLoot && player.inventory.length < player.maxSlots) {
     player.inventory.push(nearestLoot);
@@ -343,20 +351,36 @@ function update(dt) {
   mouse.worldX = mouse.x + camera.x;
   mouse.worldY = mouse.y + camera.y;
 
-  // Search immobilization: check if player is searching a container
+  // Search immobilization: check if player is searching a container or backpack
   let isSearching = false;
   for (const c of containers) {
     if (c.isSearching) {
       const d = Math.hypot(player.x - c.x, player.y - c.y);
       if (d < 70) {
         isSearching = true;
-        // Interrupt on movement attempt
         if (keys.w || keys.a || keys.s || keys.d) {
           c.isSearching = false;
           c.searchTimer = 0;
           pushNotification('⚠️ 搜索中断 — 请保持静止');
         }
         break;
+      }
+    }
+  }
+  // Check backpack search
+  if (!isSearching) {
+    for (const loot of loots) {
+      if (loot.isSearching && loot.type === 'backpack') {
+        const d = Math.hypot(player.x - loot.x, player.y - loot.y);
+        if (d < 60) {
+          isSearching = true;
+          if (keys.w || keys.a || keys.s || keys.d) {
+            loot.isSearching = false;
+            loot.searchTimer = 0;
+            pushNotification('⚠️ 搜索中断 — 请保持静止');
+          }
+          break;
+        }
       }
     }
   }
@@ -440,12 +464,39 @@ function update(dt) {
 
   // Nearest loot
   nearestLoot = null;
-  // Nearest loot detection
+  // Nearest loot detection + backpack search tick
   let minDist = 60;
   nearestLoot = null;
   for (const loot of loots) {
     const dist = Math.hypot(player.x - loot.x, player.y - loot.y);
     if (dist < minDist) { minDist = dist; nearestLoot = loot; }
+    // Tick backpack search timer
+    if (loot.isSearching && loot.type === 'backpack') {
+      loot.searchTimer -= dt;
+      if (loot.searchTimer <= 0) {
+        loot.isSearching = false;
+        // Spawn 2-3 items from backpack
+        const count = 2 + Math.floor(Math.random() * 2);
+        for (let bi = 0; bi < count; bi++) {
+          const lt = randomLootType();
+          const lx = loot.x + (Math.random() - 0.5) * 60;
+          const ly = loot.y + (Math.random() - 0.5) * 60;
+          const l = new Loot(lx, ly, lt);
+          applyLootData(l, getLootDef(lt));
+          loots.push(l);
+        }
+        // Put backpack itself into inventory if there's space
+        if (player.inventory.length < player.maxSlots) {
+          player.inventory.push(loot);
+          const idx = loots.indexOf(loot);
+          if (idx !== -1) loots.splice(idx, 1);
+          pushNotification(`🎒 背包已搜索，获得 ${count} 件物品`);
+          refreshInventoryGrid(player);
+        } else {
+          pushNotification('⚠️ 背包已满，无法拾取背包');
+        }
+      }
+    }
   }
 
   // Nearest container & search timer

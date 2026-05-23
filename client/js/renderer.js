@@ -50,10 +50,19 @@ export function render(ctx, canvas, camera, state) {
   for (const loot of loots) {
     ctx.beginPath();
     ctx.arc(loot.x, loot.y, 28 + Math.sin(Date.now() / 200) * 4, 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(6, 182, 212, 0.2)';
+    ctx.fillStyle = loot.isSearching ? 'rgba(245,158,11,0.3)' : 'rgba(6, 182, 212, 0.2)';
     ctx.fill();
     ctx.font = `${loot.size}px sans-serif`;
     ctx.fillText(loot.emoji, loot.x - loot.size / 2, loot.y + loot.size / 2);
+    // Backpack search progress
+    if (loot.isSearching && loot.type === 'backpack') {
+      const barW = loot.size * 0.8;
+      const progress = 1 - (loot.searchTimer / 1.5);
+      ctx.fillStyle = 'rgba(0,0,0,0.7)';
+      ctx.fillRect(loot.x - barW / 2, loot.y - loot.size / 2 - 14, barW, 5);
+      ctx.fillStyle = '#f59e0b';
+      ctx.fillRect(loot.x - barW / 2, loot.y - loot.size / 2 - 14, barW * progress, 5);
+    }
   }
 
   // 5b. Containers
@@ -98,17 +107,26 @@ export function render(ctx, canvas, camera, state) {
   // 7. Player
   ctx.font = `${player.size}px sans-serif`;
   ctx.fillText(player.emoji, player.x - player.size / 2, player.y + player.size / 3);
-  // Searching indicator
+  // Searching indicator (container or backpack)
+  let showSearchPct = null;
   for (const c of containers) {
     if (c.isSearching) {
       const d = Math.hypot(player.x - c.x, player.y - c.y);
-      if (d < 70) {
-        const pct = 1 - (c.searchTimer / c.searchDuration);
-        ctx.font = 'bold 12px sans-serif';
-        ctx.fillStyle = '#f59e0b';
-        ctx.fillText(`🔍 ${Math.round(pct * 100)}%`, player.x - 22, player.y - player.size / 2 - 8);
+      if (d < 70) { showSearchPct = 1 - (c.searchTimer / c.searchDuration); break; }
+    }
+  }
+  if (showSearchPct === null) {
+    for (const l of loots) {
+      if (l.isSearching && l.type === 'backpack') {
+        const d = Math.hypot(player.x - l.x, player.y - l.y);
+        if (d < 60) { showSearchPct = 1 - (l.searchTimer / 1.5); break; }
       }
     }
+  }
+  if (showSearchPct !== null) {
+    ctx.font = 'bold 12px sans-serif';
+    ctx.fillStyle = '#f59e0b';
+    ctx.fillText(`🔍 ${Math.round(showSearchPct * 100)}%`, player.x - 22, player.y - player.size / 2 - 8);
   }
 
   // Laser sight

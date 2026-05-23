@@ -117,6 +117,9 @@ export class Loot {
     this.name = '未知物品';
     this.value = 0;
     this.onPickup = null;
+    // Backpack search state
+    this.isSearching = false;
+    this.searchTimer = 0;
   }
 }
 
