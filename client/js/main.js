@@ -451,10 +451,31 @@ function initOperatorPicker() {
   if (!container) return;
   container.innerHTML = '';
 
+  const maxHp = Math.max(...ops.map(o => o.maxHp || 100));
+  const maxArmor = Math.max(...ops.map(o => o.maxArmor || 80));
+  const maxSpeed = Math.max(...ops.map(o => o.baseSpeed || 300));
+  const maxSlots = Math.max(...ops.map(o => o.maxSlots || 12));
+
   ops.forEach((op, i) => {
+    const hpPct = Math.round(((op.maxHp || 100) / maxHp) * 100);
+    const armorPct = Math.round(((op.maxArmor || 80) / maxArmor) * 100);
+    const speedPct = Math.round(((op.baseSpeed || 300) / maxSpeed) * 100);
+    const slotsPct = Math.round(((op.maxSlots || 12) / maxSlots) * 100);
+
     const card = document.createElement('div');
     card.className = 'op-card' + (i === 0 ? ' selected' : '');
-    card.innerHTML = `<span class="op-emoji">${op.emoji}</span><span class="op-name">${op.name}</span><span class="op-desc">${op.description}</span>`;
+    card.innerHTML = `
+      <span class="op-emoji">${op.emoji}</span>
+      <span class="op-name">${op.name}</span>
+      <span class="op-desc">${op.description}</span>
+      <div class="op-stats">
+        <div class="op-stat-row"><span>❤️</span><div class="op-stat-bar"><div class="op-stat-fill hp" style="width:${hpPct}%"></div></div><span class="op-stat-val">${op.maxHp}</span></div>
+        <div class="op-stat-row"><span>🛡️</span><div class="op-stat-bar"><div class="op-stat-fill armor" style="width:${armorPct}%"></div></div><span class="op-stat-val">${op.maxArmor}</span></div>
+        <div class="op-stat-row"><span>🏃</span><div class="op-stat-bar"><div class="op-stat-fill speed" style="width:${speedPct}%"></div></div><span class="op-stat-val">${op.baseSpeed}</span></div>
+        <div class="op-stat-row"><span>🎒</span><div class="op-stat-bar"><div class="op-stat-fill slots" style="width:${slotsPct}%"></div></div><span class="op-stat-val">${op.maxSlots}</span></div>
+      </div>
+      ${op.passive ? `<span class="op-passive">${op.passive}</span>` : ''}
+    `;
     card.addEventListener('click', () => {
       container.querySelectorAll('.op-card').forEach(c => c.classList.remove('selected'));
       card.classList.add('selected');

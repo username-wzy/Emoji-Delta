@@ -67,5 +67,80 @@
       "maxAmmo": 200,
       "reloadTime": 2.5
     }
+  },
+  {
+    "id": "medic",
+    "name": "战地医生",
+    "emoji": "⚕️",
+    "description": "医疗支援型 · 自带回血被动",
+    "size": 46,
+    "maxHp": 120,
+    "maxArmor": 60,
+    "armorClass": 3,
+    "maxStamina": 100,
+    "baseSpeed": 320,
+    "sprintMultiplier": 1.5,
+    "maxSlots": 14,
+    "passive": "regen",
+    "passiveValue": 2,
+    "gun": {
+      "name": "MP5-SD (9mm)",
+      "damage": 22,
+      "penetration": 25,
+      "fireRate": 0.06,
+      "magSize": 30,
+      "maxAmmo": 150,
+      "reloadTime": 1.5
+    }
+  },
+  {
+    "id": "sniper",
+    "name": "狙击手",
+    "emoji": "🎯",
+    "description": "远程精确型 · 高伤低血量",
+    "size": 44,
+    "maxHp": 70,
+    "maxArmor": 30,
+    "armorClass": 2,
+    "maxStamina": 90,
+    "baseSpeed": 300,
+    "sprintMultiplier": 1.5,
+    "maxSlots": 10,
+    "passive": "precision",
+    "passiveValue": 0.3,
+    "gun": {
+      "name": "SVD 狙击步枪",
+      "damage": 75,
+      "penetration": 70,
+      "fireRate": 1.2,
+      "magSize": 10,
+      "maxAmmo": 40,
+      "reloadTime": 3.0
+    }
+  },
+  {
+    "id": "engineer",
+    "name": "工程师",
+    "emoji": "🔧",
+    "description": "搜索加速型 · 快速开锁搜刮",
+    "size": 46,
+    "maxHp": 90,
+    "maxArmor": 70,
+    "armorClass": 3,
+    "maxStamina": 110,
+    "baseSpeed": 330,
+    "sprintMultiplier": 1.6,
+    "maxSlots": 14,
+    "passive": "fastSearch",
+    "passiveValue": 0.5,
+    "gun": {
+      "name": "P90 冲锋枪",
+      "damage": 20,
+      "penetration": 28,
+      "fireRate": 0.05,
+      "magSize": 50,
+      "maxAmmo": 150,
+      "reloadTime": 2.0
+    }
   }
 ]
