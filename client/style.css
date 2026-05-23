@@ -240,9 +240,15 @@ body, html {
   position: absolute; top: 0; left: 0;
   width: 100%; height: 100%;
   z-index: 100;
-  display: flex; align-items: center; justify-content: center;
+  display: flex; align-items: flex-start; justify-content: center;
   background: radial-gradient(ellipse at center, #111827 0%, #030712 100%);
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 20px 0 40px;
 }
+
+.start-container::-webkit-scrollbar { width: 6px; }
+.start-container::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
 
 .start-content {
   display: flex; flex-direction: column; align-items: center;
@@ -509,6 +515,27 @@ body, html {
 
 .small-btn:disabled {
   opacity: 0.3; cursor: not-allowed;
+}
+
+.stash-select-all {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 0.75rem; color: var(--text-sub);
+  cursor: pointer; font-family: var(--font-mono);
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.03);
+  transition: all 0.15s;
+}
+
+.stash-select-all:hover {
+  border-color: var(--accent-cyan);
+  background: rgba(6,182,212,0.06);
+}
+
+.stash-select-all input {
+  accent-color: var(--accent-cyan);
+  cursor: pointer;
 }
 
 .sell-btn:hover:not(:disabled) {

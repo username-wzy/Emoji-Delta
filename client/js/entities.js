@@ -11,7 +11,7 @@ export class Player {
     this.x = WORLD_WIDTH / 2;
     this.y = WORLD_HEIGHT / 2;
     this.size = op.size || 48;
-    this.emoji = op.emoji || '🥷';
+    this.emoji = op.emoji || '⚔️';
     this.opName = op.name || '特工';
     this.opId = op.id || 'tactical';
 

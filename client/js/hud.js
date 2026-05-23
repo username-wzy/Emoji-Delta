@@ -44,7 +44,10 @@ export function updateHUD(player, nearestLoot, nearestContainer) {
   if (player.gun.isReloading) elements.reloadingMsg.classList.remove('hidden');
   else elements.reloadingMsg.classList.add('hidden');
 
-  if (nearestContainer && !nearestContainer.isOpen && !nearestContainer.isSearching) {
+  if (nearestContainer && nearestContainer.isOpen && nearestContainer.spawnedLoot.length > 0) {
+    elements.interactionPrompt.classList.remove('hidden');
+    elements.interactionText.innerText = `打开 ${nearestContainer.name}`;
+  } else if (nearestContainer && !nearestContainer.isOpen && !nearestContainer.isSearching) {
     elements.interactionPrompt.classList.remove('hidden');
     const keyHint = nearestContainer.isLocked ? ' (需要钥匙卡)' : '';
     elements.interactionText.innerText = `搜索 ${nearestContainer.name}${keyHint}`;

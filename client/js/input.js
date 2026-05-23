@@ -21,7 +21,7 @@ export function initInput(canvas, cameraRef, onInteract, onReload, onToggleInven
     if (e.code === 'Tab' || e.key === 'Tab') { e.preventDefault(); onToggleInventory(); }
     if (e.code === 'KeyG' || e.key === 'g' || e.key === 'G') { e.preventDefault(); if (onGrenade) onGrenade(); }
     if (e.code === 'KeyH' || e.key === 'h' || e.key === 'H') { e.preventDefault(); if (onNearbyLoot) onNearbyLoot(); }
-    if (e.code === 'Digit3' || e.key === '3') { e.preventDefault(); if (onMedkit) onMedkit(); }
+    if (e.code === 'Digit4' || e.key === '4') { e.preventDefault(); if (onMedkit) onMedkit(); }
     if (e.code === 'Digit1' || e.key === '1') { e.preventDefault(); if (onSwitchWeapon) onSwitchWeapon(0); }
     if (e.code === 'Digit2' || e.key === '2') { e.preventDefault(); if (onSwitchWeapon) onSwitchWeapon(1); }
   });

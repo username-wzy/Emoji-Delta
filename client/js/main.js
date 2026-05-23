@@ -13,7 +13,7 @@ import { playShootSound, playHitSound, playPickupSound, playExtractionBeep, play
 import { randomLootType, getLootDef, loadLootData } from './lootdata.js';
 import { loadOperatorData, defaultOperator, getOperatorDef, allOperators } from './operatordata.js';
 import { loadBotData } from './botdata.js';
-import { addCoins, getCoins, addToStash, clearEquipped, getEquipped, setMaxEquipSlots } from './economy.js';
+import { addCoins, getCoins, addToStash, clearEquipped, getEquipped, setMaxEquipSlots, saveProfile } from './economy.js';
 import { loadWeaponData, getWeaponDef } from './weapondata.js';
 
 // ---- Canvas setup ----
@@ -360,6 +360,15 @@ function toggleInventory() {
 function throwGrenade() {
   if (player.grenadeCount <= 0) { pushNotification('⚠️ 没有手榴弹！'); return; }
   player.grenadeCount--;
+  // Remove one grenade from equipped profile so it doesn't persist after raid
+  const equipped = getEquipped();
+  for (let i = equipped.length - 1; i >= 0; i--) {
+    if (equipped[i].id === 'grenade') {
+      equipped.splice(i, 1);
+      saveProfile();
+      break;
+    }
+  }
   playGrenadeSound();
   pushNotification('💥 手榴弹投出！');
 
@@ -406,6 +415,15 @@ function useMedkit() {
   if (player.hp >= player.maxHp) { pushNotification('⚠️ 生命值已满！'); return; }
   player.medkitCount--;
   player.hp = Math.min(player.maxHp, player.hp + 50);
+  // Remove one medkit from equipped profile so it doesn't persist after raid
+  const equipped = getEquipped();
+  for (let i = equipped.length - 1; i >= 0; i--) {
+    if (equipped[i].id === 'medkit' || equipped[i].id === 'medkit_large') {
+      equipped.splice(i, 1);
+      saveProfile();
+      break;
+    }
+  }
   pushNotification(`❤️ 使用医疗包 +50 HP (剩余 ${player.medkitCount} 个)`);
 }
 
@@ -600,7 +618,8 @@ function update(dt) {
   nearestContainer = null;
   let minContainerDist = 70;
   for (const c of containers) {
-    if (c.isOpen) continue;
+    // Only skip empty opened containers; keep open ones with loot for re-open
+    if (c.isOpen && c.spawnedLoot.length === 0) continue;
     const dist = Math.hypot(player.x - c.x, player.y - c.y);
     if (dist < minContainerDist) { minContainerDist = dist; nearestContainer = c; }
     // Tick search timer

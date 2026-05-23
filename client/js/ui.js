@@ -138,11 +138,10 @@ function refreshStashUI() {
   const grid = document.getElementById('stash-grid');
   const coinsEl = document.getElementById('stash-coins');
   const equipGrid = document.getElementById('equipped-grid');
-  const sellBtn = document.getElementById('sell-btn');
-  const equipBtn = document.getElementById('equip-btn');
-  const batchEquipBtn = document.getElementById('batch-equip-btn');
-  const batchSellBtn = document.getElementById('batch-sell-btn');
+  const equipBtn = document.getElementById('stash-equip-selected');
+  const sellBtn = document.getElementById('stash-sell-selected');
   const sellAllBtn = document.getElementById('sell-all-btn');
+  const selectAllCB = document.getElementById('stash-select-all');
   const capText = document.getElementById('equip-capacity-text');
   if (!grid) return;
 
@@ -155,7 +154,8 @@ function refreshStashUI() {
   if (coinsEl) coinsEl.innerText = `💰 ${coins.toLocaleString()}`;
   grid.innerHTML = '';
   selectedStashIndices.clear();
-  updateBatchButtons();
+  if (selectAllCB) selectAllCB.checked = false;
+  updateActionButtons();
 
   if (stash.length === 0) {
     grid.innerHTML = '<span class="stash-empty">仓库空空如也</span>';
@@ -170,24 +170,17 @@ function refreshStashUI() {
       el.dataset.index = i;
       el.innerText = item.emoji || '📦';
       el.title = `${item.name || '物品'} (价值 $${(item.value || 0).toLocaleString()})`;
-      el.addEventListener('click', (e) => {
-        if (e.ctrlKey || e.metaKey) {
-          // Toggle multi-select
-          if (selectedStashIndices.has(i)) {
-            selectedStashIndices.delete(i);
-            el.classList.remove('selected');
-          } else {
-            selectedStashIndices.add(i);
-            el.classList.add('selected');
-          }
+      el.addEventListener('click', () => {
+        // Toggle selection (file-manager style)
+        if (selectedStashIndices.has(i)) {
+          selectedStashIndices.delete(i);
+          el.classList.remove('selected');
         } else {
-          // Single select
-          grid.querySelectorAll('.stash-item').forEach(c => c.classList.remove('selected'));
-          selectedStashIndices.clear();
           selectedStashIndices.add(i);
           el.classList.add('selected');
         }
-        updateBatchButtons();
+        if (selectAllCB) selectAllCB.checked = selectedStashIndices.size === display.length;
+        updateActionButtons();
       });
       grid.appendChild(el);
     }
@@ -214,61 +207,58 @@ function refreshStashUI() {
     }
   }
 
-  function updateBatchButtons() {
+  function updateActionButtons() {
     const sel = getSelectedStash();
     const hasSel = sel.length > 0;
-    if (sellBtn) sellBtn.disabled = sel.length !== 1;
-    if (equipBtn) equipBtn.disabled = sel.length !== 1 || equipped.length >= getMaxEquipSlots();
-    if (batchEquipBtn) batchEquipBtn.disabled = !hasSel || equipped.length >= getMaxEquipSlots();
-    if (batchSellBtn) batchSellBtn.disabled = !hasSel;
+    const canEquip = equipped.length < getMaxEquipSlots();
+    if (equipBtn) {
+      equipBtn.disabled = !hasSel || !canEquip;
+      equipBtn.innerHTML = `⚔️ 装备${hasSel ? ` (${sel.length})` : ''}`;
+    }
+    if (sellBtn) {
+      sellBtn.disabled = !hasSel;
+      sellBtn.innerHTML = `💸 出售${hasSel ? ` (${sel.length})` : ''}`;
+    }
   }
 
-  // Single sell
-  if (sellBtn) {
-    sellBtn.onclick = () => {
-      const sel = getSelectedStash();
-      if (sel.length === 1) {
-        const price = sellStashItem(sel[0]);
-        if (price > 0) { refreshStashUI(); refreshShopUI(); }
+  // Select-all checkbox
+  if (selectAllCB) {
+    selectAllCB.onchange = () => {
+      const items = grid.querySelectorAll('.stash-item');
+      if (selectAllCB.checked) {
+        items.forEach(el => {
+          const i = parseInt(el.dataset.index);
+          selectedStashIndices.add(i);
+          el.classList.add('selected');
+        });
+      } else {
+        selectedStashIndices.clear();
+        items.forEach(el => el.classList.remove('selected'));
       }
+      updateActionButtons();
     };
   }
 
-  // Single equip
+  // Equip selected
   if (equipBtn) {
     equipBtn.onclick = () => {
       const sel = getSelectedStash();
-      if (sel.length === 1) {
-        if (equipItem(sel[0])) refreshStashUI();
-      }
+      if (sel.length === 0) return;
+      const count = equipItems(sel);
+      if (count > 0) refreshStashUI();
     };
   }
 
-  // Batch equip
-  if (batchEquipBtn) {
-    batchEquipBtn.onclick = () => {
+  // Sell selected
+  if (sellBtn) {
+    sellBtn.onclick = () => {
       const sel = getSelectedStash();
-      if (sel.length > 0) {
-        const count = equipItems(sel);
-        if (count > 0) {
-          pushBatchNotify(`⚔️ 已装备 ${count} 件物品`);
-          refreshStashUI();
-        }
-      }
-    };
-  }
-
-  // Batch sell
-  if (batchSellBtn) {
-    batchSellBtn.onclick = () => {
-      const sel = getSelectedStash();
-      if (sel.length > 0) {
-        const total = sellStashItems(sel);
-        if (total > 0) {
-          pushBatchNotify(`💸 出售 ${sel.length} 件物品，获得 $${total.toLocaleString()}`);
-          refreshStashUI();
-          refreshShopUI();
-        }
+      if (sel.length === 0) return;
+      const total = sellStashItems(sel);
+      if (total > 0) {
+        pushBatchNotify(`💸 出售 ${sel.length} 件物品，获得 $${total.toLocaleString()}`);
+        refreshStashUI();
+        refreshShopUI();
       }
     };
   }

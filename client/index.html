@@ -49,7 +49,7 @@
       <div class="start-info">
         <div class="info-row"><span>🎯</span><span>搜索物资 · 消灭敌人 · 安全撤离</span></div>
         <div class="info-row"><span>🕹️</span><span>WASD 移动 | Shift 冲刺 | 鼠标瞄准射击</span></div>
-        <div class="info-row"><span>🎒</span><span>F 拾取 | R 换弹 | Tab 背包</span></div>
+        <div class="info-row"><span>🎒</span><span>F 拾取 | R 换弹 | Tab 背包 | 4 使用药品</span></div>
       </div>
       <div id="operator-cards" class="op-selector">
         <!-- Populated by initOperatorPicker() -->
@@ -72,10 +72,9 @@
         </div>
         <div id="stash-grid" class="stash-grid"></div>
         <div class="stash-actions">
-          <button id="equip-btn" class="small-btn equip-btn" disabled>⚔️ 装备选中</button>
-          <button id="sell-btn" class="small-btn sell-btn" disabled>💸 出售选中</button>
-          <button id="batch-equip-btn" class="small-btn equip-btn" disabled>⚔️ 批量装备</button>
-          <button id="batch-sell-btn" class="small-btn sell-btn" disabled>💸 批量出售</button>
+          <label class="stash-select-all"><input type="checkbox" id="stash-select-all"> 全选</label>
+          <button id="stash-equip-selected" class="small-btn equip-btn" disabled>⚔️ 装备选中</button>
+          <button id="stash-sell-selected" class="small-btn sell-btn" disabled>💸 出售选中</button>
           <button id="sell-all-btn" class="small-btn sell-btn">💸 全部出售</button>
         </div>
       </div>
