@@ -41,7 +41,7 @@ function getFallback() {
     { id: 'armor_heavy', emoji: '🛡️', name: '重型防弹护甲 (Class 5)', value: 15000, weight: 4, onPickup: null },
     { id: 'medkit', emoji: '💊', name: '军用医疗包 (+50 HP)', value: 2000, weight: 10, onPickup: 'heal_50' },
     { id: 'grenade', emoji: '🧨', name: '破片手榴弹', value: 3000, weight: 5, onPickup: null },
-    { id: 'ammo_9mm', emoji: '📦', name: '9mm 弹药箱 (120发)', value: 1500, weight: 12, onPickup: null },
+    { id: 'ammo_9mm', emoji: '📦', name: '9mm 弹药箱 (120发)', value: 1500, weight: 12, onPickup: null, ammoType: '9mm', ammoAmount: 120 },
     { id: 'keycard_red', emoji: '🔑', name: '红色钥匙卡', value: 50000, weight: 1, onPickup: null },
     { id: 'dogtag', emoji: '🏷️', name: '特工身份牌 ($2,000)', value: 2000, weight: 15, onPickup: null },
   ];

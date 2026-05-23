@@ -101,7 +101,9 @@
     "name": "9mm 弹药箱 (120发)",
     "value": 1500,
     "weight": 12,
-    "onPickup": null
+    "onPickup": "ammo_9mm_120",
+    "ammoType": "9mm",
+    "ammoAmount": 120
   },
   {
     "id": "ammo_rifle",
@@ -109,7 +111,9 @@
     "name": "步枪弹药箱 (90发)",
     "value": 2500,
     "weight": 8,
-    "onPickup": null
+    "onPickup": "ammo_rifle_90",
+    "ammoType": "rifle",
+    "ammoAmount": 90
   },
   {
     "id": "ammo_shell",
@@ -117,7 +121,9 @@
     "name": "霰弹弹药 (24发)",
     "value": 1800,
     "weight": 8,
-    "onPickup": null
+    "onPickup": "ammo_shell_24",
+    "ammoType": "shell",
+    "ammoAmount": 24
   },
   {
     "id": "keycard_red",
@@ -157,6 +163,54 @@
     "name": "特工身份牌 ($2,000)",
     "value": 2000,
     "weight": 15,
+    "onPickup": null
+  },
+  {
+    "id": "weapon_m4",
+    "emoji": "🔫",
+    "name": "M4A1 卡宾枪",
+    "value": 18000,
+    "weight": 4,
+    "onPickup": null
+  },
+  {
+    "id": "weapon_sniper",
+    "emoji": "🔫",
+    "name": "SVD 狙击步枪",
+    "value": 32000,
+    "weight": 2,
+    "onPickup": null
+  },
+  {
+    "id": "injector",
+    "emoji": "💉",
+    "name": "肾上腺素注射器 (+30 HP)",
+    "value": 1200,
+    "weight": 8,
+    "onPickup": "heal_30"
+  },
+  {
+    "id": "gold_watch",
+    "emoji": "⌚",
+    "name": "高级金表 ($12,000)",
+    "value": 12000,
+    "weight": 6,
+    "onPickup": null
+  },
+  {
+    "id": "night_vision",
+    "emoji": "👓",
+    "name": "夜视仪 ($15,000)",
+    "value": 15000,
+    "weight": 4,
+    "onPickup": null
+  },
+  {
+    "id": "keycard_green",
+    "emoji": "🔑",
+    "name": "绿色钥匙卡 (档案室)",
+    "value": 35000,
+    "weight": 2,
     "onPickup": null
   }
 ]

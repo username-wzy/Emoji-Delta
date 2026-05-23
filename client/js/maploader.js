@@ -1,6 +1,6 @@
 // maploader.js - Load and parse JSON fixed maps (Phase 3)
 import { WORLD_WIDTH, WORLD_HEIGHT, TILE_SIZE } from './constants.js';
-import { Wall, Bot, Loot, applyLootData } from './entities.js';
+import { Wall, Bot, Loot, LootContainer, applyLootData } from './entities.js';
 import { randomLootType, getLootDef } from './lootdata.js';
 import { randomBotType, randomBossType, getBotDef } from './botdata.js';
 
@@ -93,41 +93,8 @@ export function buildWorldFromMap(mapData) {
     }
   }
 
-  // Parse loot points (skip those on walls)
-  const lootPoints = mapData.lootPoints || [];
-  for (const lp of lootPoints) {
-    if (isWallAt(lp.x, lp.y)) {
-      console.warn(`Skipping loot at (${lp.x},${lp.y}) — tile is wall`);
-      continue;
-    }
-    if (Math.random() < (lp.weight || 10) / 30) {
-      const type = lp.type || randomLootType();
-      const loot = new Loot(lp.x * ts + ts / 2, lp.y * ts + ts / 2, type);
-      applyLootData(loot, getLootDef(type));
-      loots.push(loot);
-    }
-  }
-
-  // Ensure minimum loot on empty tiles
-  const MIN_LOOT = 12;
-  if (loots.length < MIN_LOOT) {
-    for (let i = loots.length; i < MIN_LOOT + 5; i++) {
-      let lx, ly, col, row, attempts = 0;
-      do {
-        lx = 200 + Math.random() * (WORLD_WIDTH - 400);
-        ly = 200 + Math.random() * (WORLD_HEIGHT - 400);
-        col = Math.floor(lx / ts);
-        row = Math.floor(ly / ts);
-        attempts++;
-      } while (isWallAt(col, row) && attempts < 50);
-      if (attempts < 50) {
-        const type = randomLootType();
-        const loot = new Loot(lx, ly, type);
-        applyLootData(loot, getLootDef(type));
-        loots.push(loot);
-      }
-    }
-  }
+  // Loose loot disabled (Phase 5): all loot comes from containers or bot drops
+  // lootPoints in map JSON are ignored; containers are the primary loot source
 
   // Parse extraction points
   const extractions = [];
@@ -150,10 +117,17 @@ export function buildWorldFromMap(mapData) {
   helipad.x = extractions[0].x; helipad.y = extractions[0].y;
   helipad.w = extractions[0].w; helipad.h = extractions[0].h;
 
+  // Parse containers
+  const containers = [];
+  const containerList = mapData.containers || [];
+  for (const cp of containerList) {
+    containers.push(new LootContainer(cp.x * ts + ts / 2, cp.y * ts + ts / 2, cp.type));
+  }
+
   // Parse player spawn
   const pmcSpawn = spawns.find(s => s.team === 'pmc');
   const spawnX = pmcSpawn ? pmcSpawn.x * ts + ts / 2 : 400;
   const spawnY = pmcSpawn ? pmcSpawn.y * ts + ts / 2 : WORLD_HEIGHT - 400;
 
-  return { walls, bots, loots, helipad, extractions, spawnX, spawnY, mapName: mapData.name };
+  return { walls, bots, loots, containers, helipad, extractions, spawnX, spawnY, mapName: mapData.name };
 }

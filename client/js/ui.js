@@ -1,5 +1,5 @@
 // ui.js - Start screen, game over modal, victory screen, login
-import { getCoins, setUsername, getUsername, loadProfile, getStash, sellStashItem, equipItem, unequipItem, getEquipped, clearEquipped, setPassword, checkPassword, hasPassword } from './economy.js';
+import { getCoins, setUsername, getUsername, loadProfile, getStash, sellStashItem, equipItem, unequipItem, getEquipped, clearEquipped, setPassword, checkPassword, hasPassword, resetProfile, getMaxEquipSlots, equipItems, sellStashItems, sellAllStash } from './economy.js';
 
 const resultModal = document.getElementById('result-modal');
 const resultTitle = document.getElementById('result-title');
@@ -10,51 +10,103 @@ const startScreen = document.getElementById('start-screen');
 const deployBtn = document.getElementById('deploy-btn');
 const hudOverlay = document.getElementById('hud');
 const loginScreen = document.getElementById('login-screen');
+const loginCard = loginScreen.querySelector('.login-card');
 const usernameInput = document.getElementById('username-input');
 const passwordInput = document.getElementById('password-input');
+const passwordToggle = document.getElementById('password-toggle');
+const passwordError = document.getElementById('password-error');
+const loginGreeting = document.getElementById('login-greeting');
 const loginBtn = document.getElementById('login-btn');
+const clearAccount = document.getElementById('clear-account');
 
 // ---- Login ----
 export function showLoginScreen() {
   startScreen.classList.add('hidden');
   hudOverlay.classList.add('hidden');
   loginScreen.classList.remove('hidden');
+  loginScreen.classList.remove('exiting');
+  loginCard.classList.remove('shake');
   loadProfile();
   const existing = getUsername();
-  if (existing) usernameInput.value = existing;
-  if (passwordInput) passwordInput.value = '';
-  if (hasPassword()) {
-    passwordInput.placeholder = '输入密码...';
+  if (existing) {
+    usernameInput.value = existing;
+    loginGreeting.innerText = `欢迎回来，${existing}`;
   } else {
-    passwordInput.placeholder = '设置密码 (首次登录)';
+    usernameInput.value = '';
+    loginGreeting.innerText = '首次任务 · 创建你的特工档案';
   }
+  if (passwordInput) {
+    passwordInput.value = '';
+    passwordInput.classList.remove('input-error');
+  }
+  if (hasPassword()) {
+    passwordInput.placeholder = '输入密码';
+  } else {
+    passwordInput.placeholder = '设置密码（首次登录）';
+  }
+  if (passwordError) passwordError.classList.add('hidden');
 }
 
 export function hideLoginScreen() {
-  loginScreen.classList.add('hidden');
+  loginScreen.classList.add('exiting');
+  setTimeout(() => {
+    loginScreen.classList.add('hidden');
+    loginScreen.classList.remove('exiting');
+  }, 350);
 }
 
 export function onLogin(callback) {
+  // Password visibility toggle
+  if (passwordToggle && passwordInput) {
+    passwordToggle.addEventListener('click', () => {
+      const isPassword = passwordInput.type === 'password';
+      passwordInput.type = isPassword ? 'text' : 'password';
+      passwordToggle.innerText = isPassword ? '👁‍🗨' : '👁';
+    });
+  }
+
+  // Clear account
+  if (clearAccount) {
+    clearAccount.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (confirm('确定清除本地所有账号数据？此操作不可撤销！')) {
+        resetProfile();
+        showLoginScreen();
+      }
+    });
+  }
+
   const doLogin = () => {
     const name = usernameInput.value.trim() || '特工';
     const pass = passwordInput?.value || '';
     if (hasPassword() && !checkPassword(pass)) {
-      if (passwordInput) { passwordInput.style.borderColor = '#f43f5e'; passwordInput.value = ''; }
+      loginCard.classList.remove('shake');
+      void loginCard.offsetWidth; // reflow to restart animation
+      loginCard.classList.add('shake');
+      if (passwordInput) { passwordInput.classList.add('input-error'); passwordInput.value = ''; }
+      if (passwordError) { passwordError.innerText = '密码错误，请重试'; passwordError.classList.remove('hidden'); }
       return;
     }
     if (!hasPassword() && pass) {
       setPassword(pass);
     }
     setUsername(name);
-    hideLoginScreen();
-    if (passwordInput) passwordInput.style.borderColor = '';
-    callback(name);
+    if (passwordInput) passwordInput.classList.remove('input-error');
+    if (passwordError) passwordError.classList.add('hidden');
+    // Success flash before transition
+    loginBtn.classList.add('success-flash');
+    setTimeout(() => {
+      loginBtn.classList.remove('success-flash');
+      hideLoginScreen();
+      callback(name);
+    }, 400);
   };
   loginBtn.addEventListener('click', doLogin);
   usernameInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') passwordInput?.focus(); });
   if (passwordInput) {
     passwordInput.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') doLogin();
+      else { passwordInput.classList.remove('input-error'); if (passwordError) { passwordError.classList.add('hidden'); } }
     });
   }
 }
@@ -66,15 +118,34 @@ export function showStartScreen() {
   refreshStashUI();
 }
 
-let selectedStashIdx = -1;
+let selectedStashIndices = new Set();
+
+function pushBatchNotify(text) {
+  const feed = document.getElementById('notification-feed');
+  if (!feed) return;
+  const item = document.createElement('div');
+  item.className = 'feed-item';
+  item.innerHTML = `<span>💬</span><span>${text}</span>`;
+  feed.appendChild(item);
+  setTimeout(() => { if (item.parentElement) item.parentElement.removeChild(item); }, 3000);
+}
+
+function getSelectedStash() {
+  return [...selectedStashIndices].sort((a, b) => a - b);
+}
 
 function refreshStashUI() {
   const grid = document.getElementById('stash-grid');
   const coinsEl = document.getElementById('stash-coins');
   const equipGrid = document.getElementById('equipped-grid');
-  const sellBtn = document.getElementById('sell-btn');
-  const equipBtn = document.getElementById('equip-btn');
+  const equipBtn = document.getElementById('stash-equip-selected');
+  const sellBtn = document.getElementById('stash-sell-selected');
+  const sellAllBtn = document.getElementById('sell-all-btn');
+  const selectAllCB = document.getElementById('stash-select-all');
+  const capText = document.getElementById('equip-capacity-text');
   if (!grid) return;
+
+  if (capText) capText.innerText = `容量: ${getMaxEquipSlots()}`;
 
   const stash = getStash();
   const coins = getCoins();
@@ -82,26 +153,34 @@ function refreshStashUI() {
 
   if (coinsEl) coinsEl.innerText = `💰 ${coins.toLocaleString()}`;
   grid.innerHTML = '';
-  selectedStashIdx = -1;
-  if (sellBtn) sellBtn.disabled = true;
-  if (equipBtn) equipBtn.disabled = true;
+  selectedStashIndices.clear();
+  if (selectAllCB) selectAllCB.checked = false;
+  updateActionButtons();
 
   if (stash.length === 0) {
     grid.innerHTML = '<span class="stash-empty">仓库空空如也</span>';
+    if (sellAllBtn) sellAllBtn.disabled = true;
   } else {
-    const display = stash.slice(0, 32);
+    if (sellAllBtn) sellAllBtn.disabled = false;
+    const display = stash.slice(0, 64);
     for (let i = 0; i < display.length; i++) {
       const item = display[i];
       const el = document.createElement('div');
       el.className = 'stash-item';
+      el.dataset.index = i;
       el.innerText = item.emoji || '📦';
       el.title = `${item.name || '物品'} (价值 $${(item.value || 0).toLocaleString()})`;
       el.addEventListener('click', () => {
-        grid.querySelectorAll('.stash-item').forEach(c => c.classList.remove('selected'));
-        el.classList.add('selected');
-        selectedStashIdx = i;
-        if (sellBtn) sellBtn.disabled = false;
-        if (equipBtn) equipBtn.disabled = equipped.length >= 4;
+        // Toggle selection (file-manager style)
+        if (selectedStashIndices.has(i)) {
+          selectedStashIndices.delete(i);
+          el.classList.remove('selected');
+        } else {
+          selectedStashIndices.add(i);
+          el.classList.add('selected');
+        }
+        if (selectAllCB) selectAllCB.checked = selectedStashIndices.size === display.length;
+        updateActionButtons();
       });
       grid.appendChild(el);
     }
@@ -128,25 +207,72 @@ function refreshStashUI() {
     }
   }
 
-  // Sell button
+  function updateActionButtons() {
+    const sel = getSelectedStash();
+    const hasSel = sel.length > 0;
+    const canEquip = equipped.length < getMaxEquipSlots();
+    if (equipBtn) {
+      equipBtn.disabled = !hasSel || !canEquip;
+      equipBtn.innerHTML = `⚔️ 装备${hasSel ? ` (${sel.length})` : ''}`;
+    }
+    if (sellBtn) {
+      sellBtn.disabled = !hasSel;
+      sellBtn.innerHTML = `💸 出售${hasSel ? ` (${sel.length})` : ''}`;
+    }
+  }
+
+  // Select-all checkbox
+  if (selectAllCB) {
+    selectAllCB.onchange = () => {
+      const items = grid.querySelectorAll('.stash-item');
+      if (selectAllCB.checked) {
+        items.forEach(el => {
+          const i = parseInt(el.dataset.index);
+          selectedStashIndices.add(i);
+          el.classList.add('selected');
+        });
+      } else {
+        selectedStashIndices.clear();
+        items.forEach(el => el.classList.remove('selected'));
+      }
+      updateActionButtons();
+    };
+  }
+
+  // Equip selected
+  if (equipBtn) {
+    equipBtn.onclick = () => {
+      const sel = getSelectedStash();
+      if (sel.length === 0) return;
+      const count = equipItems(sel);
+      if (count > 0) refreshStashUI();
+    };
+  }
+
+  // Sell selected
   if (sellBtn) {
     sellBtn.onclick = () => {
-      if (selectedStashIdx >= 0) {
-        const price = sellStashItem(selectedStashIdx);
-        if (price > 0) {
-          refreshStashUI();
-          refreshShopUI();
-        }
+      const sel = getSelectedStash();
+      if (sel.length === 0) return;
+      const total = sellStashItems(sel);
+      if (total > 0) {
+        pushBatchNotify(`💸 出售 ${sel.length} 件物品，获得 $${total.toLocaleString()}`);
+        refreshStashUI();
+        refreshShopUI();
       }
     };
   }
 
-  // Equip button
-  if (equipBtn) {
-    equipBtn.onclick = () => {
-      if (selectedStashIdx >= 0) {
-        if (equipItem(selectedStashIdx)) {
+  // Sell all
+  if (sellAllBtn) {
+    sellAllBtn.onclick = () => {
+      if (stash.length === 0) return;
+      if (confirm(`确定出售仓库中全部 ${stash.length} 件物品？`)) {
+        const total = sellAllStash();
+        if (total > 0) {
+          pushBatchNotify(`💸 全部出售，获得 $${total.toLocaleString()}`);
           refreshStashUI();
+          refreshShopUI();
         }
       }
     };

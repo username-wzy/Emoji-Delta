@@ -5,9 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Emoji Delta - 2D 搜打撤</title>
   <meta name="description" content="硬核 2D 搜打撤游戏，基于 HTML5 Canvas 与 Unicode Emoji。">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Outfit:wght@700;900&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="fonts/fonts.css">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -16,15 +14,27 @@
 
   <!-- Login Screen -->
   <div id="login-screen" class="login-container">
-    <div class="start-content">
-      <div class="start-emoji">🦅</div>
-      <h1 class="start-title">EMOJI DELTA</h1>
-      <p class="start-subtitle">三角洲行动 · 搜打撤</p>
-      <div class="start-divider"></div>
-      <input id="username-input" class="login-input" type="text" placeholder="输入特工代号..." maxlength="16" autocomplete="off">
-      <input id="password-input" class="login-input" type="password" placeholder="输入密码..." maxlength="32" autocomplete="off" style="margin-top:8px;">
-      <button id="login-btn" class="deploy-btn">登 录 进 入</button>
-      <p class="start-version">Phase 4 · 局外经济系统</p>
+    <div class="login-bg-pattern"></div>
+    <div class="login-card">
+      <div class="login-logo">🦅</div>
+      <h1 class="login-title">EMOJI DELTA</h1>
+      <p class="login-subtitle">三角洲行动 · 搜打撤</p>
+      <div class="login-divider"></div>
+      <p id="login-greeting" class="login-greeting"></p>
+      <div class="login-field">
+        <span class="login-field-icon">🕵️</span>
+        <input id="username-input" class="login-input" type="text" placeholder="特工代号" maxlength="16" autocomplete="off">
+      </div>
+      <div class="login-field">
+        <span class="login-field-icon">🔑</span>
+        <input id="password-input" class="login-input" type="password" placeholder="输入密码" maxlength="32" autocomplete="off">
+        <button id="password-toggle" class="login-eye" type="button" tabindex="-1">👁</button>
+      </div>
+      <p id="password-error" class="login-error hidden"></p>
+      <button id="login-btn" class="login-btn">进 入 行 动</button>
+      <p class="login-footer">
+        <a id="clear-account" class="login-clear" href="#">清除本地账号数据</a>
+      </p>
     </div>
   </div>
 
@@ -39,13 +49,20 @@
       <div class="start-info">
         <div class="info-row"><span>🎯</span><span>搜索物资 · 消灭敌人 · 安全撤离</span></div>
         <div class="info-row"><span>🕹️</span><span>WASD 移动 | Shift 冲刺 | 鼠标瞄准射击</span></div>
-        <div class="info-row"><span>🎒</span><span>F 拾取 | R 换弹 | Tab 背包</span></div>
+        <div class="info-row"><span>🎒</span><span>F 拾取 | R 换弹 | Tab 背包 | 4 使用药品</span></div>
       </div>
       <div id="operator-cards" class="op-selector">
         <!-- Populated by initOperatorPicker() -->
       </div>
+      <div id="map-select-row" style="display:flex;gap:10px;align-items:center;justify-content:center;width:100%;">
+        <span style="font-size:0.8rem;color:var(--text-sub);">🗺️ 选择地图:</span>
+        <select id="map-select" style="padding:6px 12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);border-radius:8px;color:var(--text-main);font-family:var(--font-mono);font-size:0.8rem;outline:none;cursor:pointer;">
+          <option value="maps/factory_01.json">🏭 废弃工厂 Factory-01</option>
+        </select>
+        <span style="font-size:0.55rem;color:rgba(255,255,255,0.2);">用 tools/map-editor.html 自制更多地图</span>
+      </div>
       <div id="loadout-panel" class="stash-panel">
-        <div class="stash-header"><span>⚔️ 已装备 (带入局内)</span><span class="stash-coins">最多4件</span></div>
+        <div class="stash-header"><span>⚔️ 已装备 (带入局内)</span><span id="equip-capacity-text" class="stash-coins">容量: 12</span></div>
         <div id="equipped-grid" class="stash-grid"></div>
       </div>
       <div id="stash-panel" class="stash-panel">
@@ -55,8 +72,10 @@
         </div>
         <div id="stash-grid" class="stash-grid"></div>
         <div class="stash-actions">
-          <button id="sell-btn" class="small-btn sell-btn" disabled>💸 出售选中</button>
-          <button id="equip-btn" class="small-btn equip-btn" disabled>⚔️ 装备</button>
+          <label class="stash-select-all"><input type="checkbox" id="stash-select-all"> 全选</label>
+          <button id="stash-equip-selected" class="small-btn equip-btn" disabled>⚔️ 装备选中</button>
+          <button id="stash-sell-selected" class="small-btn sell-btn" disabled>💸 出售选中</button>
+          <button id="sell-all-btn" class="small-btn sell-btn">💸 全部出售</button>
         </div>
       </div>
       <div id="shop-panel" class="stash-panel">
@@ -81,6 +100,25 @@
       </div>
 
       <div id="top-coins" class="top-coins glass-panel">💰 50,000</div>
+
+      <div id="container-loot-panel" class="container-loot-panel glass-panel hidden">
+        <div class="container-loot-header">
+          <span id="container-loot-title">📦 容器物品</span>
+          <button id="container-loot-close" class="container-loot-close">✕</button>
+        </div>
+        <div id="container-loot-grid" class="container-loot-grid"></div>
+        <button id="container-loot-all" class="container-loot-all">全部拾取</button>
+        <div id="container-loot-hint" class="nearby-hint">物品保留在容器中，可随时回来取</div>
+      </div>
+
+      <div id="nearby-loot-panel" class="nearby-panel glass-panel hidden">
+        <div class="nearby-header">
+          <span>📦 附近物品</span>
+          <span id="nearby-count">0 件</span>
+        </div>
+        <div id="nearby-loot-list" class="nearby-list"></div>
+        <div class="nearby-hint">H 关闭 | 点击物品拾取</div>
+      </div>
 
       <div id="extraction-banner" class="glass-panel hidden">
         <div class="extract-icon">🚁</div>
@@ -128,9 +166,9 @@
     <!-- Bottom Right: Weapon -->
     <div class="weapon-container glass-panel">
       <div class="weapon-info">
-        <div class="weapon-icon">🔫</div>
+        <div class="weapon-icon" id="weapon-icon-emoji">🔫</div>
         <div class="weapon-specs">
-          <div class="weapon-name">TAC-SMG (9x19mm)</div>
+          <div class="weapon-name" id="weapon-name-text">TAC-SMG (9x19mm)</div>
           <div class="fire-mode">全自动</div>
         </div>
       </div>

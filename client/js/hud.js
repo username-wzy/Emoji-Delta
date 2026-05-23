@@ -26,7 +26,7 @@ export function initHUD() {
   return elements;
 }
 
-export function updateHUD(player, nearestLoot) {
+export function updateHUD(player, nearestLoot, nearestContainer) {
   const pn = document.getElementById('player-name');
   const ac = document.getElementById('armor-class-text');
   if (pn) pn.innerText = player.opName || '特工';
@@ -44,7 +44,23 @@ export function updateHUD(player, nearestLoot) {
   if (player.gun.isReloading) elements.reloadingMsg.classList.remove('hidden');
   else elements.reloadingMsg.classList.add('hidden');
 
-  if (nearestLoot) {
+  if (nearestContainer && nearestContainer.isOpen && nearestContainer.spawnedLoot.length > 0) {
+    elements.interactionPrompt.classList.remove('hidden');
+    elements.interactionText.innerText = `打开 ${nearestContainer.name}`;
+  } else if (nearestContainer && !nearestContainer.isOpen && !nearestContainer.isSearching) {
+    elements.interactionPrompt.classList.remove('hidden');
+    const keyHint = nearestContainer.isLocked ? ' (需要钥匙卡)' : '';
+    elements.interactionText.innerText = `搜索 ${nearestContainer.name}${keyHint}`;
+  } else if (nearestContainer && nearestContainer.isSearching) {
+    elements.interactionPrompt.classList.remove('hidden');
+    elements.interactionText.innerText = `搜索中... ${nearestContainer.searchTimer.toFixed(1)}s`;
+  } else if (nearestLoot && nearestLoot.isSearching && nearestLoot.type === 'backpack') {
+    elements.interactionPrompt.classList.remove('hidden');
+    elements.interactionText.innerText = `搜索背包... ${nearestLoot.searchTimer.toFixed(1)}s`;
+  } else if (nearestLoot && nearestLoot.type === 'backpack') {
+    elements.interactionPrompt.classList.remove('hidden');
+    elements.interactionText.innerText = '搜索 遗落背包';
+  } else if (nearestLoot) {
     elements.interactionPrompt.classList.remove('hidden');
     elements.interactionText.innerText = `拾取 ${nearestLoot.name}`;
   } else {
@@ -61,11 +77,23 @@ export function updateHUD(player, nearestLoot) {
   const coinEl = document.getElementById('top-coins');
   if (coinEl) coinEl.innerText = `💰 ${(player.coins || 0).toLocaleString()}`;
 
-  // Weapon slots
+  // Weapon slots with active highlighting
   const w1 = document.getElementById('weapon-slot-1');
   const w2 = document.getElementById('weapon-slot-2');
-  if (w1) w1.innerText = player.weaponSlots?.[0]?.emoji || '🔫';
-  if (w2) w2.innerText = player.weaponSlots?.[1]?.emoji || '—';
+  const wicon = document.getElementById('weapon-icon-emoji');
+  const wname = document.getElementById('weapon-name-text');
+  if (w1) {
+    w1.innerText = player.weaponSlots?.[0]?.emoji || '🔫';
+    w1.classList.toggle('active', player.selectedWeaponIdx === 0);
+    w1.title = player.weaponSlots?.[0]?.name || '默认武器';
+  }
+  if (w2) {
+    w2.innerText = player.weaponSlots?.[1]?.emoji || '—';
+    w2.classList.toggle('active', player.selectedWeaponIdx === 1);
+    w2.title = player.weaponSlots?.[1]?.name || '';
+  }
+  if (wicon) wicon.innerText = player.weaponSlots?.[player.selectedWeaponIdx]?.emoji || '🔫';
+  if (wname) wname.innerText = player.gun.name || 'TAC-SMG';
 
   // Grenade/Med counts
   const gCount = document.getElementById('grenade-count');
