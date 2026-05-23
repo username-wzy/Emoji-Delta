@@ -5,9 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Emoji Delta - 2D 搜打撤</title>
   <meta name="description" content="硬核 2D 搜打撤游戏，基于 HTML5 Canvas 与 Unicode Emoji。">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Outfit:wght@700;900&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="fonts/fonts.css">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -22,7 +20,11 @@
       <p class="start-subtitle">三角洲行动 · 搜打撤</p>
       <div class="start-divider"></div>
       <input id="username-input" class="login-input" type="text" placeholder="输入特工代号..." maxlength="16" autocomplete="off">
-      <input id="password-input" class="login-input" type="password" placeholder="输入密码..." maxlength="32" autocomplete="off" style="margin-top:8px;">
+      <div class="password-wrapper" style="position:relative;width:100%;max-width:300px;margin-top:8px;">
+        <input id="password-input" class="login-input" type="password" placeholder="输入密码..." maxlength="32" autocomplete="off" style="padding-right:44px;">
+        <button id="password-toggle" type="button" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;color:rgba(255,255,255,0.4);cursor:pointer;font-size:1.2rem;padding:4px 8px;line-height:1;" tabindex="-1">👁</button>
+      </div>
+      <p id="password-error" class="hidden" style="color:#f43f5e;font-size:0.8rem;margin:-4px 0 8px;font-family:var(--font-mono);text-align:center;"></p>
       <button id="login-btn" class="deploy-btn">登 录 进 入</button>
       <p class="start-version">Phase 4 · 局外经济系统</p>
     </div>
