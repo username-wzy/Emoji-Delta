@@ -7,6 +7,9 @@ let maxEquipSlots = 12; // dynamic, set from operator selection
 /** Set the max equipped slots from operator + backpack */
 export function setMaxEquipSlots(n) { maxEquipSlots = Math.max(1, n); }
 export function getMaxEquipSlots() { return maxEquipSlots; }
+
+/** Load profile from localStorage */
+export function loadProfile() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
