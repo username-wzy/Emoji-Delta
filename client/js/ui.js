@@ -1,5 +1,5 @@
 // ui.js - Start screen, game over modal, victory screen, login
-import { getCoins, setUsername, getUsername, loadProfile, getStash, sellStashItem, equipItem, unequipItem, getEquipped, clearEquipped, setPassword, checkPassword, hasPassword, resetProfile } from './economy.js';
+import { getCoins, setUsername, getUsername, loadProfile, getStash, sellStashItem, equipItem, unequipItem, getEquipped, clearEquipped, setPassword, checkPassword, hasPassword, resetProfile, getMaxEquipSlots } from './economy.js';
 
 const resultModal = document.getElementById('result-modal');
 const resultTitle = document.getElementById('result-title');
@@ -126,7 +126,10 @@ function refreshStashUI() {
   const equipGrid = document.getElementById('equipped-grid');
   const sellBtn = document.getElementById('sell-btn');
   const equipBtn = document.getElementById('equip-btn');
+  const capText = document.getElementById('equip-capacity-text');
   if (!grid) return;
+
+  if (capText) capText.innerText = `容量: ${getMaxEquipSlots()}`;
 
   const stash = getStash();
   const coins = getCoins();
@@ -153,7 +156,7 @@ function refreshStashUI() {
         el.classList.add('selected');
         selectedStashIdx = i;
         if (sellBtn) sellBtn.disabled = false;
-        if (equipBtn) equipBtn.disabled = equipped.length >= 4;
+        if (equipBtn) equipBtn.disabled = equipped.length >= getMaxEquipSlots();
       });
       grid.appendChild(el);
     }

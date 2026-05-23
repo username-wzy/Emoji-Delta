@@ -13,7 +13,7 @@ import { playShootSound, playHitSound, playPickupSound, playExtractionBeep, play
 import { randomLootType, getLootDef, loadLootData } from './lootdata.js';
 import { loadOperatorData, defaultOperator, getOperatorDef, allOperators } from './operatordata.js';
 import { loadBotData } from './botdata.js';
-import { addCoins, getCoins, addToStash, clearEquipped, getEquipped } from './economy.js';
+import { addCoins, getCoins, addToStash, clearEquipped, getEquipped, setMaxEquipSlots } from './economy.js';
 import { loadWeaponData, getWeaponDef } from './weapondata.js';
 
 // ---- Canvas setup ----
@@ -781,11 +781,26 @@ function initOperatorPicker() {
       container.querySelectorAll('.op-card').forEach(c => c.classList.remove('selected'));
       card.classList.add('selected');
       selectedOpId = op.id;
+      // Update equip capacity from operator + any backpack bonus
+      let cap = op.maxSlots || 12;
+      const eq = getEquipped();
+      if (eq.some(e => e.id === 'backpack')) cap += 4;
+      setMaxEquipSlots(cap);
+      const capText = document.getElementById('equip-capacity-text');
+      if (capText) capText.innerText = `容量: ${cap}`;
     });
     container.appendChild(card);
   });
 
-  if (ops.length > 0) selectedOpId = ops[0].id;
+  if (ops.length > 0) {
+    selectedOpId = ops[0].id;
+    let cap = ops[0].maxSlots || 12;
+    const eq = getEquipped();
+    if (eq.some(e => e.id === 'backpack')) cap += 4;
+    setMaxEquipSlots(cap);
+    const capText = document.getElementById('equip-capacity-text');
+    if (capText) capText.innerText = `容量: ${cap}`;
+  }
 }
 
 // Login → Start screen flow

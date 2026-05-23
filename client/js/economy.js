@@ -2,9 +2,11 @@
 const STORAGE_KEY = 'emoji_delta_profile';
 
 let profile = null;
+let maxEquipSlots = 12; // dynamic, set from operator selection
 
-/** Load profile from localStorage */
-export function loadProfile() {
+/** Set the max equipped slots from operator + backpack */
+export function setMaxEquipSlots(n) { maxEquipSlots = Math.max(1, n); }
+export function getMaxEquipSlots() { return maxEquipSlots; }
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
@@ -164,7 +166,7 @@ export function equipItem(stashIndex) {
     const currentWeapons = profile.equipped.filter(e => e.id && e.id.startsWith('weapon_')).length;
     if (currentWeapons >= 2) return false;
   }
-  if (profile.equipped.length >= 4) return false;
+  if (profile.equipped.length >= maxEquipSlots) return false;
   profile.stash.splice(stashIndex, 1);
   profile.equipped.push(item);
   saveProfile();
