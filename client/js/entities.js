@@ -128,6 +128,25 @@ export function applyLootData(loot, def) {
   loot.onPickup = def.onPickup || null;
 }
 
+export class LootContainer {
+  constructor(x, y, containerType) {
+    this.id = Math.random().toString();
+    this.x = x;
+    this.y = y;
+    this.type = containerType; // 'safe', 'filing_cabinet', 'wardrobe'
+    this.size = 48;
+    this.isOpen = false;
+    this.isSearching = false;
+    this.searchTimer = 0;
+    this.searchDuration = containerType === 'safe' ? 5.0 : 3.0;
+    this.isLocked = containerType === 'safe';
+    this.emoji = { safe: '🔐', filing_cabinet: '🗄️', wardrobe: '🚪' }[containerType] || '📦';
+    this.name = { safe: '保险柜', filing_cabinet: '文件柜', wardrobe: '衣柜' }[containerType] || '容器';
+    this.requiredKey = containerType === 'safe' ? 'keycard_red' : null;
+    this.spawnedLoot = [];
+  }
+}
+
 export class Particle {
   constructor(x, y, vx, vy, color, life, size) {
     this.x = x; this.y = y;

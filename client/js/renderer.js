@@ -2,7 +2,7 @@
 import { TILE_SIZE, BG_COLOR_DARK, BG_COLOR_LIGHT } from './constants.js';
 
 export function render(ctx, canvas, camera, state) {
-  const { player, walls, bots, loots, particles, soundBlips, helipad, mouse, shakeAmount } = state;
+  const { player, walls, bots, loots, containers, particles, soundBlips, helipad, mouse, shakeAmount } = state;
 
   ctx.save();
 
@@ -54,6 +54,29 @@ export function render(ctx, canvas, camera, state) {
     ctx.fill();
     ctx.font = `${loot.size}px sans-serif`;
     ctx.fillText(loot.emoji, loot.x - loot.size / 2, loot.y + loot.size / 2);
+  }
+
+  // 5b. Containers
+  for (const c of containers) {
+    const cAlpha = c.isOpen ? 0.3 : 0.6;
+    ctx.beginPath();
+    ctx.roundRect(c.x - c.size / 2, c.y - c.size / 2, c.size, c.size, 8);
+    ctx.fillStyle = c.isOpen ? 'rgba(16,185,129,0.1)' : `rgba(245,158,11,${cAlpha})`;
+    ctx.fill();
+    ctx.strokeStyle = c.isOpen ? 'rgba(16,185,129,0.3)' : `rgba(245,158,11,${cAlpha + 0.2})`;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.font = `${c.size * 0.7}px sans-serif`;
+    ctx.fillText(c.isOpen ? '📭' : c.emoji, c.x - c.size * 0.35, c.y + c.size * 0.25);
+    // Search progress bar
+    if (c.isSearching) {
+      const barW = c.size * 0.8;
+      const progress = 1 - (c.searchTimer / c.searchDuration);
+      ctx.fillStyle = 'rgba(0,0,0,0.7)';
+      ctx.fillRect(c.x - barW / 2, c.y - c.size / 2 - 14, barW, 6);
+      ctx.fillStyle = '#f59e0b';
+      ctx.fillRect(c.x - barW / 2, c.y - c.size / 2 - 14, barW * progress, 6);
+    }
   }
 
   // 6. Bots

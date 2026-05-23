@@ -26,7 +26,7 @@ export function initHUD() {
   return elements;
 }
 
-export function updateHUD(player, nearestLoot) {
+export function updateHUD(player, nearestLoot, nearestContainer) {
   const pn = document.getElementById('player-name');
   const ac = document.getElementById('armor-class-text');
   if (pn) pn.innerText = player.opName || '特工';
@@ -44,7 +44,14 @@ export function updateHUD(player, nearestLoot) {
   if (player.gun.isReloading) elements.reloadingMsg.classList.remove('hidden');
   else elements.reloadingMsg.classList.add('hidden');
 
-  if (nearestLoot) {
+  if (nearestContainer && !nearestContainer.isOpen && !nearestContainer.isSearching) {
+    elements.interactionPrompt.classList.remove('hidden');
+    const keyHint = nearestContainer.isLocked ? ' (需要钥匙卡)' : '';
+    elements.interactionText.innerText = `搜索 ${nearestContainer.name}${keyHint}`;
+  } else if (nearestContainer && nearestContainer.isSearching) {
+    elements.interactionPrompt.classList.remove('hidden');
+    elements.interactionText.innerText = `搜索中... ${nearestContainer.searchTimer.toFixed(1)}s`;
+  } else if (nearestLoot) {
     elements.interactionPrompt.classList.remove('hidden');
     elements.interactionText.innerText = `拾取 ${nearestLoot.name}`;
   } else {

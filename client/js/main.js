@@ -1,6 +1,6 @@
 // main.js - Game entry point, world init, game loop (Phase 3)
 import { WORLD_WIDTH, WORLD_HEIGHT, TILE_SIZE } from './constants.js';
-import { Player, Wall, Bot, Loot, Particle, SoundBlip, applyLootData } from './entities.js';
+import { Player, Wall, Bot, Loot, LootContainer, Particle, SoundBlip, applyLootData } from './entities.js';
 import { keys, mouse, initInput } from './input.js';
 import { aabb, getPlayerBox, raycastHitscan, movePlayer } from './physics.js';
 import { updateBots } from './ai.js';
@@ -26,9 +26,11 @@ let player = new Player(defaultOperator());
 let walls = [];
 let bots = [];
 let loots = [];
+let containers = [];
 let particles = [];
 let soundBlips = [];
 let nearestLoot = null;
+let nearestContainer = null;
 let camera = { x: 0, y: 0 };
 let isGameOver = false;
 let gameStarted = false; // prevents update logic until deploy
@@ -41,7 +43,8 @@ let weaponSlots = [];  // weapons brought into raid
 let selectedWeaponIdx = 0;
 
 async function initWorld() {
-  walls = []; bots = []; loots = []; particles = []; soundBlips = [];
+  walls = []; bots = []; loots = []; containers = []; particles = []; soundBlips = [];
+  nearestContainer = null;
   isGameOver = false;
   gameStarted = true; // unlock combat logic
   const opDef = getOperatorDef(selectedOpId || defaultOperator().id);
@@ -55,6 +58,7 @@ async function initWorld() {
   walls = world.walls;
   bots = world.bots;
   loots = world.loots;
+  containers = world.containers || [];
   extractions = world.extractions || [world.helipad];
   helipad = extractions[0] || world.helipad;
   mapName = world.mapName || 'DELTA-01';
@@ -196,6 +200,22 @@ function reloadWeapon() {
 }
 
 function interactTarget() {
+  // Container interaction takes priority
+  if (nearestContainer && !nearestContainer.isOpen && !nearestContainer.isSearching) {
+    if (nearestContainer.isLocked && nearestContainer.requiredKey) {
+      const hasKey = player.inventory.some(item => item.type === nearestContainer.requiredKey);
+      if (!hasKey) {
+        pushNotification(`🔒 需要 ${nearestContainer.requiredKey === 'keycard_red' ? '红色钥匙卡' : '钥匙卡'} 才能打开${nearestContainer.name}`);
+        return;
+      }
+    }
+    nearestContainer.isSearching = true;
+    nearestContainer.searchTimer = nearestContainer.searchDuration;
+    pushNotification(`🔍 正在搜索 ${nearestContainer.name}... (${nearestContainer.searchDuration.toFixed(0)}秒)`);
+    return;
+  }
+
+  // Loot pickup
   if (nearestLoot && player.inventory.length < player.maxSlots) {
     player.inventory.push(nearestLoot);
     const idx = loots.indexOf(nearestLoot);
@@ -400,10 +420,40 @@ function update(dt) {
 
   // Nearest loot
   nearestLoot = null;
+  // Nearest loot detection
   let minDist = 60;
+  nearestLoot = null;
   for (const loot of loots) {
     const dist = Math.hypot(player.x - loot.x, player.y - loot.y);
     if (dist < minDist) { minDist = dist; nearestLoot = loot; }
+  }
+
+  // Nearest container & search timer
+  nearestContainer = null;
+  let minContainerDist = 70;
+  for (const c of containers) {
+    if (c.isOpen) continue;
+    const dist = Math.hypot(player.x - c.x, player.y - c.y);
+    if (dist < minContainerDist) { minContainerDist = dist; nearestContainer = c; }
+    // Tick search timer
+    if (c.isSearching) {
+      c.searchTimer -= dt;
+      if (c.searchTimer <= 0) {
+        c.isSearching = false;
+        c.isOpen = true;
+        // Spawn loot from container
+        const lootCount = 2 + Math.floor(Math.random() * 3); // 2-4 items
+        for (let li = 0; li < lootCount; li++) {
+          const lt = randomLootType();
+          const lx = c.x + (Math.random() - 0.5) * 80;
+          const ly = c.y + (Math.random() - 0.5) * 80;
+          const l = new Loot(lx, ly, lt);
+          applyLootData(l, getLootDef(lt));
+          loots.push(l);
+        }
+        pushNotification(`🔓 ${c.name} 已打开，获得 ${lootCount} 件物品`);
+      }
+    }
   }
 
   // Particles & sound blips
@@ -427,7 +477,7 @@ function update(dt) {
   // Sync weapon/grenade/med state to player for HUD
   player.weaponSlots = weaponSlots;
   player.selectedWeaponIdx = selectedWeaponIdx;
-  updateHUD(player, nearestLoot);
+  updateHUD(player, nearestLoot, nearestContainer);
 }
 
 // ---- Game loop ----
@@ -436,7 +486,7 @@ function loop(now) {
   const dt = Math.min((now - lastTime) / 1000, 0.1);
   lastTime = now;
   update(dt);
-  render(ctx, canvas, camera, { player, walls, bots, loots, particles, soundBlips, helipad, extractions, mouse, shakeAmount });
+  render(ctx, canvas, camera, { player, walls, bots, loots, containers, particles, soundBlips, helipad, extractions, mouse, shakeAmount });
   requestAnimationFrame(loop);
 }
 

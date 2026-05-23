@@ -91,6 +91,16 @@
     { "x": 25, "y": 28, "radius": 200 },
     { "x": 8, "y": 18, "radius": 200 }
   ],
+  "containers": [
+    { "x": 12, "y": 10, "type": "filing_cabinet" },
+    { "x": 14, "y": 10, "type": "filing_cabinet" },
+    { "x": 38, "y": 8, "type": "safe" },
+    { "x": 8, "y": 22, "type": "wardrobe" },
+    { "x": 10, "y": 22, "type": "wardrobe" },
+    { "x": 30, "y": 20, "type": "filing_cabinet" },
+    { "x": 42, "y": 20, "type": "safe" },
+    { "x": 20, "y": 14, "type": "filing_cabinet" }
+  ],
   "extractions": [
     { "x": 44, "y": 2, "w": 3, "h": 3, "name": "屋顶直升机", "emoji": "🚁" },
     { "x": 2, "y": 2, "w": 3, "h": 3, "name": "地下通道", "emoji": "🚪" },

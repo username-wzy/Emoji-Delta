@@ -1,6 +1,6 @@
 // maploader.js - Load and parse JSON fixed maps (Phase 3)
 import { WORLD_WIDTH, WORLD_HEIGHT, TILE_SIZE } from './constants.js';
-import { Wall, Bot, Loot, applyLootData } from './entities.js';
+import { Wall, Bot, Loot, LootContainer, applyLootData } from './entities.js';
 import { randomLootType, getLootDef } from './lootdata.js';
 import { randomBotType, randomBossType, getBotDef } from './botdata.js';
 
@@ -150,10 +150,17 @@ export function buildWorldFromMap(mapData) {
   helipad.x = extractions[0].x; helipad.y = extractions[0].y;
   helipad.w = extractions[0].w; helipad.h = extractions[0].h;
 
+  // Parse containers
+  const containers = [];
+  const containerList = mapData.containers || [];
+  for (const cp of containerList) {
+    containers.push(new LootContainer(cp.x * ts + ts / 2, cp.y * ts + ts / 2, cp.type));
+  }
+
   // Parse player spawn
   const pmcSpawn = spawns.find(s => s.team === 'pmc');
   const spawnX = pmcSpawn ? pmcSpawn.x * ts + ts / 2 : 400;
   const spawnY = pmcSpawn ? pmcSpawn.y * ts + ts / 2 : WORLD_HEIGHT - 400;
 
-  return { walls, bots, loots, helipad, extractions, spawnX, spawnY, mapName: mapData.name };
+  return { walls, bots, loots, containers, helipad, extractions, spawnX, spawnY, mapName: mapData.name };
 }
