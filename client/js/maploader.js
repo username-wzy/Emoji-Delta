@@ -93,41 +93,8 @@ export function buildWorldFromMap(mapData) {
     }
   }
 
-  // Parse loot points (skip those on walls)
-  const lootPoints = mapData.lootPoints || [];
-  for (const lp of lootPoints) {
-    if (isWallAt(lp.x, lp.y)) {
-      console.warn(`Skipping loot at (${lp.x},${lp.y}) — tile is wall`);
-      continue;
-    }
-    if (Math.random() < (lp.weight || 10) / 30) {
-      const type = lp.type || randomLootType();
-      const loot = new Loot(lp.x * ts + ts / 2, lp.y * ts + ts / 2, type);
-      applyLootData(loot, getLootDef(type));
-      loots.push(loot);
-    }
-  }
-
-  // Ensure minimum loot on empty tiles
-  const MIN_LOOT = 12;
-  if (loots.length < MIN_LOOT) {
-    for (let i = loots.length; i < MIN_LOOT + 5; i++) {
-      let lx, ly, col, row, attempts = 0;
-      do {
-        lx = 200 + Math.random() * (WORLD_WIDTH - 400);
-        ly = 200 + Math.random() * (WORLD_HEIGHT - 400);
-        col = Math.floor(lx / ts);
-        row = Math.floor(ly / ts);
-        attempts++;
-      } while (isWallAt(col, row) && attempts < 50);
-      if (attempts < 50) {
-        const type = randomLootType();
-        const loot = new Loot(lx, ly, type);
-        applyLootData(loot, getLootDef(type));
-        loots.push(loot);
-      }
-    }
-  }
+  // Loose loot disabled (Phase 5): all loot comes from containers or bot drops
+  // lootPoints in map JSON are ignored; containers are the primary loot source
 
   // Parse extraction points
   const extractions = [];
