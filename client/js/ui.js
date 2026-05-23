@@ -1,5 +1,5 @@
 // ui.js - Start screen, game over modal, victory screen, login
-import { getCoins, setUsername, getUsername, loadProfile, getStash, sellStashItem, equipItem, unequipItem, getEquipped, clearEquipped, setPassword, checkPassword, hasPassword } from './economy.js';
+import { getCoins, setUsername, getUsername, loadProfile, getStash, sellStashItem, equipItem, unequipItem, getEquipped, clearEquipped, setPassword, checkPassword, hasPassword, resetProfile } from './economy.js';
 
 const resultModal = document.getElementById('result-modal');
 const resultTitle = document.getElementById('result-title');
@@ -10,51 +10,103 @@ const startScreen = document.getElementById('start-screen');
 const deployBtn = document.getElementById('deploy-btn');
 const hudOverlay = document.getElementById('hud');
 const loginScreen = document.getElementById('login-screen');
+const loginCard = loginScreen.querySelector('.login-card');
 const usernameInput = document.getElementById('username-input');
 const passwordInput = document.getElementById('password-input');
+const passwordToggle = document.getElementById('password-toggle');
+const passwordError = document.getElementById('password-error');
+const loginGreeting = document.getElementById('login-greeting');
 const loginBtn = document.getElementById('login-btn');
+const clearAccount = document.getElementById('clear-account');
 
 // ---- Login ----
 export function showLoginScreen() {
   startScreen.classList.add('hidden');
   hudOverlay.classList.add('hidden');
   loginScreen.classList.remove('hidden');
+  loginScreen.classList.remove('exiting');
+  loginCard.classList.remove('shake');
   loadProfile();
   const existing = getUsername();
-  if (existing) usernameInput.value = existing;
-  if (passwordInput) passwordInput.value = '';
-  if (hasPassword()) {
-    passwordInput.placeholder = '输入密码...';
+  if (existing) {
+    usernameInput.value = existing;
+    loginGreeting.innerText = `欢迎回来，${existing}`;
   } else {
-    passwordInput.placeholder = '设置密码 (首次登录)';
+    usernameInput.value = '';
+    loginGreeting.innerText = '首次任务 · 创建你的特工档案';
   }
+  if (passwordInput) {
+    passwordInput.value = '';
+    passwordInput.classList.remove('input-error');
+  }
+  if (hasPassword()) {
+    passwordInput.placeholder = '输入密码';
+  } else {
+    passwordInput.placeholder = '设置密码（首次登录）';
+  }
+  if (passwordError) passwordError.classList.add('hidden');
 }
 
 export function hideLoginScreen() {
-  loginScreen.classList.add('hidden');
+  loginScreen.classList.add('exiting');
+  setTimeout(() => {
+    loginScreen.classList.add('hidden');
+    loginScreen.classList.remove('exiting');
+  }, 350);
 }
 
 export function onLogin(callback) {
+  // Password visibility toggle
+  if (passwordToggle && passwordInput) {
+    passwordToggle.addEventListener('click', () => {
+      const isPassword = passwordInput.type === 'password';
+      passwordInput.type = isPassword ? 'text' : 'password';
+      passwordToggle.innerText = isPassword ? '👁‍🗨' : '👁';
+    });
+  }
+
+  // Clear account
+  if (clearAccount) {
+    clearAccount.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (confirm('确定清除本地所有账号数据？此操作不可撤销！')) {
+        resetProfile();
+        showLoginScreen();
+      }
+    });
+  }
+
   const doLogin = () => {
     const name = usernameInput.value.trim() || '特工';
     const pass = passwordInput?.value || '';
     if (hasPassword() && !checkPassword(pass)) {
-      if (passwordInput) { passwordInput.style.borderColor = '#f43f5e'; passwordInput.value = ''; }
+      loginCard.classList.remove('shake');
+      void loginCard.offsetWidth; // reflow to restart animation
+      loginCard.classList.add('shake');
+      if (passwordInput) { passwordInput.classList.add('input-error'); passwordInput.value = ''; }
+      if (passwordError) { passwordError.innerText = '密码错误，请重试'; passwordError.classList.remove('hidden'); }
       return;
     }
     if (!hasPassword() && pass) {
       setPassword(pass);
     }
     setUsername(name);
-    hideLoginScreen();
-    if (passwordInput) passwordInput.style.borderColor = '';
-    callback(name);
+    if (passwordInput) passwordInput.classList.remove('input-error');
+    if (passwordError) passwordError.classList.add('hidden');
+    // Success flash before transition
+    loginBtn.classList.add('success-flash');
+    setTimeout(() => {
+      loginBtn.classList.remove('success-flash');
+      hideLoginScreen();
+      callback(name);
+    }, 400);
   };
   loginBtn.addEventListener('click', doLogin);
   usernameInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') passwordInput?.focus(); });
   if (passwordInput) {
     passwordInput.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') doLogin();
+      else { passwordInput.classList.remove('input-error'); if (passwordError) { passwordError.classList.add('hidden'); } }
     });
   }
 }

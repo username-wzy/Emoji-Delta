@@ -190,3 +190,10 @@ export function clearEquipped() {
   profile.equipped = [];
   saveProfile();
 }
+
+/** Reset entire profile to defaults (clear account) */
+export function resetProfile() {
+  localStorage.removeItem(STORAGE_KEY);
+  profile = createDefault();
+  saveProfile();
+}
