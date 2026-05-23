@@ -343,7 +343,27 @@ function update(dt) {
   mouse.worldX = mouse.x + camera.x;
   mouse.worldY = mouse.y + camera.y;
 
-  movePlayer(player, dt, keys, walls, WORLD_WIDTH, WORLD_HEIGHT);
+  // Search immobilization: check if player is searching a container
+  let isSearching = false;
+  for (const c of containers) {
+    if (c.isSearching) {
+      const d = Math.hypot(player.x - c.x, player.y - c.y);
+      if (d < 70) {
+        isSearching = true;
+        // Interrupt on movement attempt
+        if (keys.w || keys.a || keys.s || keys.d) {
+          c.isSearching = false;
+          c.searchTimer = 0;
+          pushNotification('⚠️ 搜索中断 — 请保持静止');
+        }
+        break;
+      }
+    }
+  }
+
+  if (!isSearching) {
+    movePlayer(player, dt, keys, walls, WORLD_WIDTH, WORLD_HEIGHT);
+  }
 
   // Gun
   if (player.gun.cooldown > 0) player.gun.cooldown -= dt;

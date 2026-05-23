@@ -98,6 +98,18 @@ export function render(ctx, canvas, camera, state) {
   // 7. Player
   ctx.font = `${player.size}px sans-serif`;
   ctx.fillText(player.emoji, player.x - player.size / 2, player.y + player.size / 3);
+  // Searching indicator
+  for (const c of containers) {
+    if (c.isSearching) {
+      const d = Math.hypot(player.x - c.x, player.y - c.y);
+      if (d < 70) {
+        const pct = 1 - (c.searchTimer / c.searchDuration);
+        ctx.font = 'bold 12px sans-serif';
+        ctx.fillStyle = '#f59e0b';
+        ctx.fillText(`🔍 ${Math.round(pct * 100)}%`, player.x - 22, player.y - player.size / 2 - 8);
+      }
+    }
+  }
 
   // Laser sight
   const targetAngle = Math.atan2(mouse.worldY - player.y, mouse.worldX - player.x);
