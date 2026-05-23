@@ -492,7 +492,95 @@ function loop(now) {
 
 // ---- Init ----
 initHUD();
-initInput(canvas, camera, interactTarget, reloadWeapon, toggleInventory, throwGrenade, useMedkit, switchWeapon);
+// ---- Nearby loot panel (H key) ----
+const nearbyListEl = document.getElementById('nearby-loot-list');
+const nearbyCountEl = document.getElementById('nearby-count');
+const nearbyPanel = document.getElementById('nearby-loot-panel');
+let nearbyItems = []; // snapshot of loot within range
+
+function toggleNearbyLoot() {
+  if (!nearbyPanel) return;
+  if (nearbyPanel.classList.contains('hidden')) {
+    refreshNearbyPanel();
+    nearbyPanel.classList.remove('hidden');
+  } else {
+    nearbyPanel.classList.add('hidden');
+    nearbyItems = [];
+  }
+}
+
+function refreshNearbyPanel() {
+  if (!nearbyListEl || !nearbyCountEl) return;
+  nearbyItems = [];
+  for (const loot of loots) {
+    const dist = Math.hypot(player.x - loot.x, player.y - loot.y);
+    if (dist <= 250) {
+      nearbyItems.push({ loot, dist: Math.round(dist) });
+    }
+  }
+  nearbyItems.sort((a, b) => a.dist - b.dist);
+  nearbyCountEl.innerText = `${nearbyItems.length} 件`;
+  nearbyListEl.innerHTML = '';
+  if (nearbyItems.length === 0) {
+    nearbyListEl.innerHTML = '<div class="nearby-empty">附近没有物品</div>';
+    return;
+  }
+  nearbyItems.forEach((entry, i) => {
+    const item = entry.loot;
+    const el = document.createElement('div');
+    el.className = 'nearby-item';
+    el.innerHTML = `
+      <span class="nearby-item-emoji">${item.emoji}</span>
+      <div class="nearby-item-info">
+        <span class="nearby-item-name">${item.name}</span>
+        <span class="nearby-item-value">$${(item.value || 0).toLocaleString()}</span>
+      </div>
+      <span class="nearby-item-dist">${entry.dist}m</span>
+    `;
+    el.addEventListener('click', () => pickNearbyItem(i));
+    nearbyListEl.appendChild(el);
+  });
+}
+
+function pickNearbyItem(i) {
+  if (i < 0 || i >= nearbyItems.length) return;
+  const entry = nearbyItems[i];
+  const loot = entry.loot;
+  if (player.inventory.length >= player.maxSlots) {
+    pushNotification('⚠️ 背包已满');
+    return;
+  }
+  // Re-verify distance
+  const dist = Math.hypot(player.x - loot.x, player.y - loot.y);
+  if (dist > 250) {
+    pushNotification('⚠️ 距离太远，无法拾取');
+    refreshNearbyPanel();
+    return;
+  }
+  // Remove from world, add to inventory
+  player.inventory.push(loot);
+  const idx = loots.indexOf(loot);
+  if (idx !== -1) loots.splice(idx, 1);
+  pushNotification(`📥 拾取了 ${loot.name}`);
+  playPickupSound();
+  // Apply onPickup effects
+  const def = getLootDef(loot.type);
+  if (def.onPickup === 'heal_30') {
+    player.hp = Math.min(player.maxHp, player.hp + 30);
+  } else if (def.onPickup === 'heal_50') {
+    player.hp = Math.min(player.maxHp, player.hp + 50);
+  } else if (def.onPickup === 'heal_100') {
+    player.hp = Math.min(player.maxHp, player.hp + 100);
+  }
+  if (def.ammoAmount && player.gun.ammoType === def.ammoType) {
+    player.gun.maxAmmo += def.ammoAmount;
+  }
+  refreshNearbyPanel();
+  refreshInventoryGrid(player);
+  if (nearestLoot === loot) nearestLoot = null;
+}
+
+initInput(canvas, camera, interactTarget, reloadWeapon, toggleInventory, throwGrenade, useMedkit, switchWeapon, toggleNearbyLoot);
 
 // ---- Operator picker on start screen ----
 function initOperatorPicker() {

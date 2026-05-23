@@ -2,7 +2,7 @@
 export const keys = { w: false, a: false, s: false, d: false, shift: false };
 export const mouse = { x: 0, y: 0, worldX: 0, worldY: 0, isDown: false };
 
-export function initInput(canvas, cameraRef, onInteract, onReload, onToggleInventory, onGrenade, onMedkit, onSwitchWeapon) {
+export function initInput(canvas, cameraRef, onInteract, onReload, onToggleInventory, onGrenade, onMedkit, onSwitchWeapon, onNearbyLoot) {
   window.addEventListener('resize', () => {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
@@ -20,7 +20,8 @@ export function initInput(canvas, cameraRef, onInteract, onReload, onToggleInven
     if (e.code === 'KeyR' || e.key === 'r' || e.key === 'R') onReload();
     if (e.code === 'Tab' || e.key === 'Tab') { e.preventDefault(); onToggleInventory(); }
     if (e.code === 'KeyG' || e.key === 'g' || e.key === 'G') { e.preventDefault(); if (onGrenade) onGrenade(); }
-    if (e.code === 'KeyH' || e.key === 'h' || e.key === 'H') { e.preventDefault(); if (onMedkit) onMedkit(); }
+    if (e.code === 'KeyH' || e.key === 'h' || e.key === 'H') { e.preventDefault(); if (onNearbyLoot) onNearbyLoot(); }
+    if (e.code === 'Digit3' || e.key === '3') { e.preventDefault(); if (onMedkit) onMedkit(); }
     if (e.code === 'Digit1' || e.key === '1') { e.preventDefault(); if (onSwitchWeapon) onSwitchWeapon(0); }
     if (e.code === 'Digit2' || e.key === '2') { e.preventDefault(); if (onSwitchWeapon) onSwitchWeapon(1); }
   });
