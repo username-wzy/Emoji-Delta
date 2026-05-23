@@ -83,12 +83,37 @@ async function initWorld() {
   selectedWeaponIdx = 0;
   applyWeaponStats();
 
-  // Count grenades/meds from equipped
+  // Apply all equipped consumables/gear to player
   player.grenadeCount = 0;
   player.medkitCount = 0;
   for (const item of equipped) {
     if (item.id === 'grenade') player.grenadeCount++;
     if (item.id === 'medkit' || item.id === 'medkit_large') player.medkitCount++;
+    // Armor: override operator default
+    if (item.id === 'armor_light') {
+      player.armor = Math.max(player.armor, 120);
+      player.maxArmor = Math.max(player.maxArmor, 120);
+      player.armorClass = Math.max(player.armorClass, 3);
+    }
+    if (item.id === 'armor_heavy') {
+      player.armor = Math.max(player.armor, 220);
+      player.maxArmor = Math.max(player.maxArmor, 220);
+      player.armorClass = Math.max(player.armorClass, 5);
+    }
+    // Backpack: increase inventory capacity
+    if (item.id === 'backpack') {
+      player.maxSlots += 4;
+    }
+    // Ammo boxes: boost reserve ammo for matching weapon
+    if (item.id === 'ammo_9mm' && player.gun.ammoType === '9mm') {
+      player.gun.maxAmmo += 120;
+    }
+    if (item.id === 'ammo_rifle' && player.gun.ammoType === 'rifle') {
+      player.gun.maxAmmo += 120;
+    }
+    if (item.id === 'ammo_shell' && player.gun.ammoType === 'shell') {
+      player.gun.maxAmmo += 24;
+    }
   }
 
   pushNotification(`⚡ 成功部署至 ${mapName}。寻找物资并前往直升机点撤离！`);
