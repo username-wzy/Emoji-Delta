@@ -54,6 +54,13 @@
       <div id="operator-cards" class="op-selector">
         <!-- Populated by initOperatorPicker() -->
       </div>
+      <div id="map-select-row" style="display:flex;gap:10px;align-items:center;justify-content:center;width:100%;">
+        <span style="font-size:0.8rem;color:var(--text-sub);">🗺️ 选择地图:</span>
+        <select id="map-select" style="padding:6px 12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);border-radius:8px;color:var(--text-main);font-family:var(--font-mono);font-size:0.8rem;outline:none;cursor:pointer;">
+          <option value="maps/factory_01.json">🏭 废弃工厂 Factory-01</option>
+        </select>
+        <span style="font-size:0.55rem;color:rgba(255,255,255,0.2);">用 tools/map-editor.html 自制更多地图</span>
+      </div>
       <div id="loadout-panel" class="stash-panel">
         <div class="stash-header"><span>⚔️ 已装备 (带入局内)</span><span id="equip-capacity-text" class="stash-coins">容量: 12</span></div>
         <div id="equipped-grid" class="stash-grid"></div>

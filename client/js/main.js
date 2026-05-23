@@ -51,8 +51,10 @@ async function initWorld() {
   player = new Player(opDef);
   player.coins = getCoins();
 
-  // Load JSON map (Phase 3)
-  const mapData = await loadMap('maps/factory_01.json');
+  // Load selected map
+  const mapSelect = document.getElementById('map-select');
+  const mapPath = mapSelect ? mapSelect.value : 'maps/factory_01.json';
+  const mapData = await loadMap(mapPath);
   const world = buildWorldFromMap(mapData);
 
   walls = world.walls;
@@ -61,7 +63,7 @@ async function initWorld() {
   containers = world.containers || [];
   extractions = world.extractions || [world.helipad];
   helipad = extractions[0] || world.helipad;
-  mapName = world.mapName || 'DELTA-01';
+  mapName = world.mapName || mapData?.name || 'DELTA-01';
   player.x = world.spawnX;
   player.y = world.spawnY;
 
