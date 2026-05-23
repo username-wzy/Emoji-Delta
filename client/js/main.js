@@ -277,7 +277,14 @@ function useMedkit() {
 }
 
 function switchWeapon(idx) {
-  if (idx < 0 || idx >= weaponSlots.length) return;
+  if (idx < 0 || idx >= weaponSlots.length || idx === selectedWeaponIdx) return;
+  // Save current weapon ammo state before switching
+  const cur = weaponSlots[selectedWeaponIdx];
+  if (cur && cur.id !== 'default') {
+    cur.currentAmmo = player.gun.currentAmmo;
+    cur.maxAmmo = player.gun.maxAmmo;
+  }
+  // Switch to new weapon
   selectedWeaponIdx = idx;
   applyWeaponStats();
   pushNotification(`🔫 切换至 ${weaponSlots[idx].name}`);
@@ -411,6 +418,7 @@ function update(dt) {
 
   // Sync weapon/grenade/med state to player for HUD
   player.weaponSlots = weaponSlots;
+  player.selectedWeaponIdx = selectedWeaponIdx;
   updateHUD(player, nearestLoot);
 }
 

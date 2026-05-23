@@ -61,11 +61,23 @@ export function updateHUD(player, nearestLoot) {
   const coinEl = document.getElementById('coins-display');
   if (coinEl) coinEl.innerText = `💰 ${player.coins?.toLocaleString() || 0}`;
 
-  // Weapon slots
+  // Weapon slots with active highlighting
   const w1 = document.getElementById('weapon-slot-1');
   const w2 = document.getElementById('weapon-slot-2');
-  if (w1) w1.innerText = player.weaponSlots?.[0]?.emoji || '🔫';
-  if (w2) w2.innerText = player.weaponSlots?.[1]?.emoji || '—';
+  const wicon = document.getElementById('weapon-icon-emoji');
+  const wname = document.getElementById('weapon-name-text');
+  if (w1) {
+    w1.innerText = player.weaponSlots?.[0]?.emoji || '🔫';
+    w1.classList.toggle('active', player.selectedWeaponIdx === 0);
+    w1.title = player.weaponSlots?.[0]?.name || '默认武器';
+  }
+  if (w2) {
+    w2.innerText = player.weaponSlots?.[1]?.emoji || '—';
+    w2.classList.toggle('active', player.selectedWeaponIdx === 1);
+    w2.title = player.weaponSlots?.[1]?.name || '';
+  }
+  if (wicon) wicon.innerText = player.weaponSlots?.[player.selectedWeaponIdx]?.emoji || '🔫';
+  if (wname) wname.innerText = player.gun.name || 'TAC-SMG';
 
   // Grenade/Med counts
   const gCount = document.getElementById('grenade-count');
