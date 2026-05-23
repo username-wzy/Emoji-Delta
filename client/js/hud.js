@@ -65,8 +65,8 @@ export function updateHUD(player, nearestLoot, nearestContainer) {
 
   elements.lootCount.innerText = `${player.inventory.length} / ${player.maxSlots}`;
 
-  const coinEl = document.getElementById('coins-display');
-  if (coinEl) coinEl.innerText = `💰 ${player.coins?.toLocaleString() || 0}`;
+  const coinEl = document.getElementById('top-coins');
+  if (coinEl) coinEl.innerText = `💰 ${(player.coins || 0).toLocaleString()}`;
 
   // Weapon slots with active highlighting
   const w1 = document.getElementById('weapon-slot-1');

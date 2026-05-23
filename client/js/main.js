@@ -555,9 +555,10 @@ onDeploy(async () => {
 });
 
 onRestart(async () => {
-  await initWorld();
-  refreshInventoryGrid(player);
+  gameStarted = false;
   isGameOver = false;
+  initOperatorPicker();
+  showStartScreen();
 });
 
 // Start rendering
