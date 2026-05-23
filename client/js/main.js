@@ -199,7 +199,102 @@ function reloadWeapon() {
   player.gun.reloadTimer = player.gun.reloadTime;
 }
 
+// ---- Container loot view ----
+const containerLootPanel = document.getElementById('container-loot-panel');
+const containerLootTitle = document.getElementById('container-loot-title');
+const containerLootGrid = document.getElementById('container-loot-grid');
+const containerLootClose = document.getElementById('container-loot-close');
+const containerLootAll = document.getElementById('container-loot-all');
+const containerLootHint = document.getElementById('container-loot-hint');
+let viewingContainer = null;
+
+function showContainerLoot(c) {
+  viewingContainer = c;
+  containerLootTitle.innerText = `${c.emoji} ${c.name} 物品`;
+  renderContainerLootGrid();
+  containerLootPanel.classList.remove('hidden');
+}
+
+function hideContainerLoot() {
+  containerLootPanel.classList.add('hidden');
+  viewingContainer = null;
+}
+
+function renderContainerLootGrid() {
+  if (!viewingContainer) return;
+  containerLootGrid.innerHTML = '';
+  if (viewingContainer.spawnedLoot.length === 0) {
+    containerLootGrid.innerHTML = '<div class="container-loot-empty">物品已全部取走</div>';
+    containerLootAll.disabled = true;
+    containerLootHint.classList.add('hidden');
+  } else {
+    containerLootAll.disabled = false;
+    containerLootHint.classList.remove('hidden');
+    viewingContainer.spawnedLoot.forEach((item, i) => {
+      const el = document.createElement('div');
+      el.className = 'container-loot-item';
+      el.innerHTML = `
+        <span class="container-loot-item-emoji">${item.emoji}</span>
+        <div class="container-loot-item-info">
+          <span class="container-loot-item-name">${item.name}</span>
+          <span class="container-loot-item-value">$${(item.value || 0).toLocaleString()}</span>
+        </div>
+        <button class="container-loot-pick">拾取</button>
+      `;
+      el.querySelector('.container-loot-pick').addEventListener('click', (e) => {
+        e.stopPropagation();
+        pickFromContainer(i);
+      });
+      containerLootGrid.appendChild(el);
+    });
+  }
+}
+
+function pickFromContainer(i) {
+  if (!viewingContainer || i < 0 || i >= viewingContainer.spawnedLoot.length) return;
+  if (player.inventory.length >= player.maxSlots) {
+    pushNotification('⚠️ 背包已满');
+    return;
+  }
+  const item = viewingContainer.spawnedLoot[i];
+  const loot = new Loot(viewingContainer.x, viewingContainer.y, item.type);
+  applyLootData(loot, { emoji: item.emoji, name: item.name, value: item.value, onPickup: item.onPickup, ammoType: item.ammoType, ammoAmount: item.ammoAmount });
+  player.inventory.push(loot);
+  viewingContainer.spawnedLoot.splice(i, 1);
+  pushNotification(`📥 拾取了 ${item.name}`);
+  playPickupSound();
+  // Apply onPickup effects
+  if (item.onPickup === 'heal_30') player.hp = Math.min(player.maxHp, player.hp + 30);
+  else if (item.onPickup === 'heal_50') player.hp = Math.min(player.maxHp, player.hp + 50);
+  else if (item.onPickup === 'heal_100') player.hp = Math.min(player.maxHp, player.hp + 100);
+  if (item.ammoAmount && player.gun.ammoType === item.ammoType) player.gun.maxAmmo += item.ammoAmount;
+  renderContainerLootGrid();
+  refreshInventoryGrid(player);
+}
+
+function takeAllFromContainer() {
+  if (!viewingContainer) return;
+  const items = [...viewingContainer.spawnedLoot];
+  let taken = 0;
+  for (let i = items.length - 1; i >= 0; i--) {
+    if (player.inventory.length >= player.maxSlots) break;
+    pickFromContainer(i);
+    taken++;
+  }
+  if (taken > 0) pushNotification(`📥 全部拾取，获得 ${taken} 件物品`);
+  else if (viewingContainer.spawnedLoot.length > 0) pushNotification('⚠️ 背包已满');
+}
+
+if (containerLootClose) containerLootClose.addEventListener('click', hideContainerLoot);
+if (containerLootAll) containerLootAll.addEventListener('click', takeAllFromContainer);
+
 function interactTarget() {
+  // Re-open container view
+  if (nearestContainer && nearestContainer.isOpen && nearestContainer.spawnedLoot.length > 0) {
+    showContainerLoot(nearestContainer);
+    return;
+  }
+
   // Container interaction takes priority
   if (nearestContainer && !nearestContainer.isOpen && !nearestContainer.isSearching) {
     if (nearestContainer.isLocked && nearestContainer.requiredKey) {
@@ -512,15 +607,12 @@ function update(dt) {
       if (c.searchTimer <= 0) {
         c.isSearching = false;
         c.isOpen = true;
-        // Spawn loot from container
+        // Generate loot into container's spawnedLoot
         const lootCount = 2 + Math.floor(Math.random() * 3); // 2-4 items
         for (let li = 0; li < lootCount; li++) {
           const lt = randomLootType();
-          const lx = c.x + (Math.random() - 0.5) * 80;
-          const ly = c.y + (Math.random() - 0.5) * 80;
-          const l = new Loot(lx, ly, lt);
-          applyLootData(l, getLootDef(lt));
-          loots.push(l);
+          const def = getLootDef(lt);
+          c.spawnedLoot.push({ type: lt, emoji: def.emoji, name: def.name, value: def.value || 0, onPickup: def.onPickup, ammoType: def.ammoType, ammoAmount: def.ammoAmount });
         }
         pushNotification(`🔓 ${c.name} 已打开，获得 ${lootCount} 件物品`);
       }
