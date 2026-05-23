@@ -14,6 +14,7 @@ import { randomLootType, getLootDef, loadLootData } from './lootdata.js';
 import { loadOperatorData, defaultOperator, getOperatorDef, allOperators } from './operatordata.js';
 import { loadBotData } from './botdata.js';
 import { addCoins, getCoins, addToStash, clearEquipped, getEquipped } from './economy.js';
+import { loadWeaponData, getWeaponDef } from './weapondata.js';
 
 // ---- Canvas setup ----
 const canvas = /** @type {HTMLCanvasElement} */ (document.getElementById('gameCanvas'));
@@ -65,7 +66,14 @@ async function initWorld() {
   const equipped = getEquipped();
   for (const item of equipped) {
     if (item.id && item.id.startsWith('weapon_') && weaponSlots.length < 2) {
-      weaponSlots.push({ id: item.id, emoji: item.emoji, name: item.name });
+      const def = getWeaponDef(item.id);
+      weaponSlots.push({
+        id: item.id, emoji: item.emoji, name: item.name,
+        damage: def?.damage, penetration: def?.penetration,
+        fireRate: def?.fireRate, magSize: def?.magSize,
+        maxAmmo: def?.maxAmmo, reloadTime: def?.reloadTime,
+        ammoType: def?.ammoType, currentAmmo: def?.magSize
+      });
     }
   }
   // Fallback: at least the default gun
@@ -252,18 +260,19 @@ function switchWeapon(idx) {
 
 function applyWeaponStats() {
   const wp = weaponSlots[selectedWeaponIdx];
-  if (!wp || wp.id === 'default') return; // keep default gun
-  // For non-default weapons, adjust gun stats based on weapon type
-  if (wp.id === 'weapon_ak47') {
-    player.gun.name = 'AK-47'; player.gun.damage = 32; player.gun.penetration = 40;
-    player.gun.fireRate = 0.1; player.gun.magSize = 30; player.gun.currentAmmo = 30; player.gun.maxAmmo = 90; player.gun.reloadTime = 2.0;
-  } else if (wp.id === 'weapon_mp5') {
-    player.gun.name = 'MP5-SD'; player.gun.damage = 22; player.gun.penetration = 25;
-    player.gun.fireRate = 0.06; player.gun.magSize = 30; player.gun.currentAmmo = 30; player.gun.maxAmmo = 150; player.gun.reloadTime = 1.5;
-  } else if (wp.id === 'weapon_shotgun') {
-    player.gun.name = 'M870'; player.gun.damage = 45; player.gun.penetration = 20;
-    player.gun.fireRate = 0.5; player.gun.magSize = 6; player.gun.currentAmmo = 6; player.gun.maxAmmo = 24; player.gun.reloadTime = 2.5;
-  }
+  if (!wp || wp.id === 'default') return;
+  const def = getWeaponDef(wp.id) || wp; // fallback to slot data if no JSON def
+  Object.assign(player.gun, {
+    name: def.name || wp.name,
+    damage: def.damage || 28,
+    penetration: def.penetration || 35,
+    fireRate: def.fireRate || 0.08,
+    magSize: def.magSize || 30,
+    currentAmmo: wp.currentAmmo != null ? wp.currentAmmo : (def.magSize || 30),
+    maxAmmo: wp.maxAmmo != null ? wp.maxAmmo : (def.maxAmmo || 120),
+    reloadTime: def.reloadTime || 1.8,
+    ammoType: def.ammoType || '9mm'
+  });
 }
 
 // ---- Update loop ----
@@ -417,7 +426,7 @@ function initOperatorPicker() {
 }
 
 // Login → Start screen flow
-Promise.all([loadLootData(), loadOperatorData(), loadBotData(), loadShopData()]).then(() => {
+Promise.all([loadLootData(), loadOperatorData(), loadBotData(), loadShopData(), loadWeaponData()]).then(() => {
   initOperatorPicker();
   showLoginScreen();
   onLogin((name) => {
