@@ -205,7 +205,10 @@ function interactTarget() {
 
     // Apply onPickup effect
     const def = getLootDef(nearestLoot.type);
-    if (def.onPickup === 'heal_50') {
+    if (def.onPickup === 'heal_30') {
+      player.hp = Math.min(player.maxHp, player.hp + 30);
+      pushNotification('💉 使用肾上腺素，恢复 30 HP');
+    } else if (def.onPickup === 'heal_50') {
       player.hp = Math.min(player.maxHp, player.hp + 50);
       pushNotification('❤️ 使用医疗包，恢复 50 HP');
     } else if (def.onPickup === 'heal_100') {

@@ -164,5 +164,53 @@
     "value": 2000,
     "weight": 15,
     "onPickup": null
+  },
+  {
+    "id": "weapon_m4",
+    "emoji": "🔫",
+    "name": "M4A1 卡宾枪",
+    "value": 18000,
+    "weight": 4,
+    "onPickup": null
+  },
+  {
+    "id": "weapon_sniper",
+    "emoji": "🔫",
+    "name": "SVD 狙击步枪",
+    "value": 32000,
+    "weight": 2,
+    "onPickup": null
+  },
+  {
+    "id": "injector",
+    "emoji": "💉",
+    "name": "肾上腺素注射器 (+30 HP)",
+    "value": 1200,
+    "weight": 8,
+    "onPickup": "heal_30"
+  },
+  {
+    "id": "gold_watch",
+    "emoji": "⌚",
+    "name": "高级金表 ($12,000)",
+    "value": 12000,
+    "weight": 6,
+    "onPickup": null
+  },
+  {
+    "id": "night_vision",
+    "emoji": "👓",
+    "name": "夜视仪 ($15,000)",
+    "value": 15000,
+    "weight": 4,
+    "onPickup": null
+  },
+  {
+    "id": "keycard_green",
+    "emoji": "🔑",
+    "name": "绿色钥匙卡 (档案室)",
+    "value": 35000,
+    "weight": 2,
+    "onPickup": null
   }
 ]

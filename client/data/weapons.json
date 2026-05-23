@@ -58,5 +58,41 @@
     "maxAmmo": 24,
     "reloadTime": 2.5,
     "ammoType": "shell"
+  },
+  {
+    "id": "weapon_m4",
+    "emoji": "🔫",
+    "name": "M4A1 卡宾枪",
+    "damage": 30,
+    "penetration": 38,
+    "fireRate": 0.09,
+    "magSize": 30,
+    "maxAmmo": 120,
+    "reloadTime": 1.9,
+    "ammoType": "rifle"
+  },
+  {
+    "id": "weapon_p90",
+    "emoji": "🔫",
+    "name": "P90 冲锋枪",
+    "damage": 20,
+    "penetration": 28,
+    "fireRate": 0.05,
+    "magSize": 50,
+    "maxAmmo": 150,
+    "reloadTime": 2.0,
+    "ammoType": "9mm"
+  },
+  {
+    "id": "weapon_sniper",
+    "emoji": "🔫",
+    "name": "SVD 狙击步枪",
+    "damage": 75,
+    "penetration": 70,
+    "fireRate": 1.2,
+    "magSize": 10,
+    "maxAmmo": 40,
+    "reloadTime": 3.0,
+    "ammoType": "rifle"
   }
 ]
